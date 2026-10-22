@@ -204,6 +204,7 @@
     box-shadow: inset 0 2px 3px rgba(0,0,0,.22), 0 1px 0 rgba(255,255,255,.28);
   }
   .ghost.off { opacity: 0; }
+  .ghost.p2::before { background: var(--cpu); }
 
   .frame {
     position: relative;
@@ -403,9 +404,9 @@
   <header class="top">
     <h1 class="mark">Connect<span>4</span></h1>
     <div class="score" aria-label="Score">
-      <div class="tally you"><span class="lbl">You</span><span class="dot"></span><b id="sYou">0</b></div>
+      <div class="tally you"><span class="lbl" id="lblYou">You</span><span class="dot"></span><b id="sYou">0</b></div>
       <div class="tally draw"><span class="lbl">Draws</span><b id="sDraw">0</b></div>
-      <div class="tally cpu"><span class="lbl">Computer</span><span class="dot"></span><b id="sCpu">0</b></div>
+      <div class="tally cpu"><span class="lbl" id="lblCpu">Computer</span><span class="dot"></span><b id="sCpu">0</b></div>
     </div>
   </header>
 
@@ -429,7 +430,14 @@
 
   <div class="controls">
     <div class="seg-wrap">
-      <span class="seg-label" id="levelLabel">Computer</span>
+      <span class="seg-label" id="modeLabel">Opponent</span>
+      <div class="seg" role="radiogroup" aria-labelledby="modeLabel" id="modes">
+        <button type="button" role="radio" id="mode-cpu" data-mode="cpu" aria-checked="true">Computer</button>
+        <button type="button" role="radio" id="mode-pvp" data-mode="pvp" aria-checked="false">Two players</button>
+      </div>
+    </div>
+    <div class="seg-wrap" id="levelWrap">
+      <span class="seg-label" id="levelLabel">Strength</span>
       <div class="seg" role="radiogroup" aria-labelledby="levelLabel" id="levels">
         <button type="button" role="radio" id="lvl-casual" data-level="casual" aria-checked="false">Casual</button>
         <button type="button" role="radio" id="lvl-steady" data-level="steady" aria-checked="true">Steady</button>
@@ -441,7 +449,7 @@
       <button type="button" class="btn primary" id="newBtn">New game</button>
     </div>
   </div>
-  <p class="hint">Click a column or press <kbd>1</kbd>–<kbd>7</kbd>. Arrow keys and <kbd>Enter</kbd> work too. <kbd>N</kbd> starts a new game. Who goes first alternates each game.</p>
+  <p class="hint">Click a column or press <kbd>1</kbd>–<kbd>7</kbd>. Arrow keys and <kbd>Enter</kbd> work too. <kbd>N</kbd> starts a new game. Who goes first alternates each game. In two-player mode, Red and Yellow take turns on the same screen.</p>
 </main>
 
 <script>
@@ -469,6 +477,7 @@
     status: $("status"), statusText: $("statusText"), meta: $("meta"),
     sYou: $("sYou"), sCpu: $("sCpu"), sDraw: $("sDraw"),
     newBtn: $("newBtn"), soundBtn: $("soundBtn"), levels: $("levels"),
+    modes: $("modes"), levelWrap: $("levelWrap"), lblYou: $("lblYou"), lblCpu: $("lblCpu"),
   };
 
   const store = {
@@ -479,6 +488,7 @@
   let state;
   let busy = false;
   let aiTimer = null;
+  let gameId = 0;
   let hoverCol = 3;
 
   // ---------- Board helpers ----------
@@ -622,10 +632,24 @@
       d.classList.toggle(set.has(+d.dataset.i) ? "win" : "dim", true);
     });
   }
+  const isPvp = () => state.mode === "pvp";
+  function name(p) {
+    if (isPvp()) return p === YOU ? "Red" : "Yellow";
+    return p === YOU ? "You" : "Computer";
+  }
+  function scores() { return isPvp() ? state.pvpScores : state.scores; }
+  function saveScore(key) {
+    const s = scores();
+    s[key]++;
+    store.set(isPvp() ? "c4.pvpScores" : "c4.scores", s);
+  }
   function updateScore() {
-    els.sYou.textContent = state.scores.you;
-    els.sCpu.textContent = state.scores.cpu;
-    els.sDraw.textContent = state.scores.draw;
+    const s = scores();
+    els.sYou.textContent = s.you;
+    els.sCpu.textContent = s.cpu;
+    els.sDraw.textContent = s.draw;
+    els.lblYou.textContent = name(YOU);
+    els.lblCpu.textContent = name(CPU);
   }
   function setStatus(text, who, thinking = false) {
     els.statusText.textContent = text;
@@ -633,14 +657,15 @@
     els.status.classList.toggle("thinking", thinking);
   }
   function updateMeta() {
-    const starter = state.starter === YOU ? "You started" : "Computer started";
+    const starter = `${name(state.starter)} started`;
     els.meta.textContent = state.over
       ? `${state.moves} moves · ${starter}`
       : `Move ${state.moves + 1} of 42 · ${starter}`;
   }
   function updateGhost() {
-    const show = !state.over && !busy && state.turn === YOU;
+    const show = !state.over && !busy && (isPvp() || state.turn === YOU);
     els.ghost.classList.toggle("off", !show);
+    els.ghost.classList.toggle("p2", state.turn === CPU);
     els.ghost.style.setProperty("--col", hoverCol);
     [...els.labels.children].forEach((s, k) => s.classList.toggle("on", show && k === hoverCol));
     els.grid.classList.toggle("locked", !show);
@@ -650,6 +675,8 @@
     updateMeta();
     updateGhost();
     els.levels.querySelectorAll("button").forEach(b => b.setAttribute("aria-checked", String(b.dataset.level === state.level)));
+    els.modes.querySelectorAll("button").forEach(b => b.setAttribute("aria-checked", String(b.dataset.mode === state.mode)));
+    els.levelWrap.hidden = isPvp();
     els.soundBtn.textContent = state.sound ? "Sound on" : "Sound off";
     els.soundBtn.setAttribute("aria-pressed", String(state.sound));
     [...els.cols.children].forEach((btn, c) => {
@@ -659,9 +686,14 @@
     });
     if (state.over) {
       const r = state.result;
-      if (r === YOU) setStatus(`You win in ${Math.ceil(state.moves / 2)} moves`, "you");
-      else if (r === CPU) setStatus("The computer connected four", "cpu");
-      else setStatus("Board full. It's a draw", "none");
+      const n = r === state.starter ? Math.ceil(state.moves / 2) : Math.floor(state.moves / 2);
+      const who = r === YOU ? "you" : "cpu";
+      if (!r) setStatus("Board full. It's a draw", "none");
+      else if (isPvp()) setStatus(`${name(r)} wins in ${n} moves`, who);
+      else if (r === YOU) setStatus(`You win in ${n} moves`, who);
+      else setStatus("The computer connected four", who);
+    } else if (isPvp()) {
+      setStatus(`${name(state.turn)}'s move`, state.turn === YOU ? "you" : "cpu");
     } else if (state.turn === YOU) {
       setStatus("Your move", "you");
     }
@@ -678,19 +710,22 @@
       over: false,
       result: 0,
       winLine: null,
+      mode: prev ? prev.mode : store.get("c4.mode", "cpu"),
       level: prev ? prev.level : store.get("c4.level", "steady"),
       sound: prev ? prev.sound : store.get("c4.sound", true),
       scores: prev ? prev.scores : store.get("c4.scores", { you: 0, cpu: 0, draw: 0 }),
+      pvpScores: prev ? prev.pvpScores : store.get("c4.pvpScores", { you: 0, cpu: 0, draw: 0 }),
     };
   }
   function newGame() {
     clearTimeout(aiTimer);
+    gameId++;
     busy = false;
     state = freshState(state);
     els.newBtn.classList.remove("pulse");
     renderAll();
     refresh();
-    if (state.turn === CPU) scheduleAI();
+    if (!isPvp() && state.turn === CPU) scheduleAI();
   }
 
   function drop(c, player) {
@@ -705,7 +740,9 @@
     const disc = makeDisc(i, player);
     const fall = r + 1 + 0.15;
     const dur = reduceMotion ? 0 : 260 + Math.sqrt(fall) * 120;
+    const id = gameId;
     const done = () => {
+      if (id !== gameId) return; // a new game started while this disc was falling
       busy = false;
       soundDrop(player);
       afterMove(i, player);
@@ -728,9 +765,9 @@
       state.result = player;
       state.winLine = lineThrough(state.board, i);
       markWin(state.winLine);
-      if (player === YOU) state.scores.you++; else state.scores.cpu++;
-      store.set("c4.scores", state.scores);
-      soundEnd(player);
+      saveScore(player === YOU ? "you" : "cpu");
+      // In two-player mode every win gets the happy tune.
+      soundEnd(state.mode === "pvp" ? YOU : player);
       els.newBtn.classList.add("pulse");
       refresh();
       return;
@@ -738,8 +775,7 @@
     if (state.moves >= CELLS) {
       state.over = true;
       state.result = 0;
-      state.scores.draw++;
-      store.set("c4.scores", state.scores);
+      saveScore("draw");
       soundEnd(0);
       els.newBtn.classList.add("pulse");
       refresh();
@@ -747,7 +783,7 @@
     }
     state.turn = 3 - player;
     refresh();
-    if (state.turn === CPU) scheduleAI();
+    if (!isPvp() && state.turn === CPU) scheduleAI();
   }
 
   function scheduleAI() {
@@ -763,9 +799,9 @@
   }
 
   function humanPlay(c) {
-    if (state.over || busy || state.turn !== YOU) return;
+    if (state.over || busy || (!isPvp() && state.turn !== YOU)) return;
     hoverCol = c;
-    drop(c, YOU);
+    drop(c, state.turn);
   }
 
   // ---------- Input ----------
@@ -826,14 +862,34 @@
     $("lvl-" + state.level).focus();
   });
 
+  function setMode(mode) {
+    if (mode === state.mode) return;
+    state.mode = mode;
+    store.set("c4.mode", mode);
+    newGame();
+  }
+  els.modes.addEventListener("click", e => {
+    const b = e.target.closest("button[data-mode]");
+    if (b) setMode(b.dataset.mode);
+  });
+  els.modes.addEventListener("keydown", e => {
+    if (e.key !== "ArrowLeft" && e.key !== "ArrowRight") return;
+    e.stopPropagation();
+    e.preventDefault();
+    setMode(e.key === "ArrowLeft" ? "cpu" : "pvp");
+    $("mode-" + state.mode).focus();
+  });
+
   // ---------- Boot (keeps an in-progress game across page updates) ----------
   function start(data) {
     if (data && data.state && Array.isArray(data.state.board)) {
       state = data.state;
+      state.mode = state.mode || "cpu";
+      state.pvpScores = state.pvpScores || store.get("c4.pvpScores", { you: 0, cpu: 0, draw: 0 });
       hoverCol = data.hoverCol ?? 3;
       renderAll();
       refresh();
-      if (!state.over && state.turn === CPU) scheduleAI();
+      if (!state.over && !isPvp() && state.turn === CPU) scheduleAI();
     } else {
       state = freshState(null);
       renderAll();
