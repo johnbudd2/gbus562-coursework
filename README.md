@@ -7,3 +7,4 @@ This repository holds the materials created in UMW's GBUS 562 course (AI Languag
 ## Weekly Material
 
 1. week-01
+   - [Connect 4](week-01/connect4.html): a browser game you can play against the computer or with a friend
