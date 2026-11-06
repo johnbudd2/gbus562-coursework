@@ -1,2 +1,8 @@
 # Python virtual environment
 .venv/
+
+# Python bytecode cache
+__pycache__/
+
+# Chroma vector database (rebuild with: python week-03/ask.py --rebuild)
+week-03/chroma_db/
