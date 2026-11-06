@@ -12,3 +12,5 @@ This repository holds the materials created in UMW's GBUS 562 course (AI Languag
    - [Prompt Lab](week-02/prompt-lab.html): a web app for testing prompts against Claude, built with Claude Code.
    - [Exported runs](week-02/runs/): four Prompt Lab runs for the Wildframe tasks, one per prompting technique (zero-shot, one-shot, few-shot, chain-of-thought).
    - [Writeup](week-02/writeup.md): why each technique fit its task, one full example run, and a reflection comparing the results.
+3. week-03
+   - A RAG tool that answers questions from Copperline Manufacturing's finance documents, built with Claude Code.
