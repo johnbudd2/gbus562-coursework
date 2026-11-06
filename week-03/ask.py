@@ -1,16 +1,20 @@
-"""Ask questions about Copperline Manufacturing's finance documents (RAG).
+"""Ask questions about a folder of documents (RAG).
 
 Usage (from the top of the repository):
     .venv\\Scripts\\python.exe week-03\\ask.py "How much can I spend on dinner in Boston?"
     .venv\\Scripts\\python.exe week-03\\ask.py              # interactive: ask several questions
     .venv\\Scripts\\python.exe week-03\\ask.py --rebuild    # re-index after adding/removing documents
+    .venv\\Scripts\\python.exe week-03\\ask.py --docs week-03\\larkfield-docs "What is the overdraft fee?"
+    .venv\\Scripts\\python.exe week-03\\ask.py "..." --save week-03\\runs\\q1.txt   # also save the output
 
 How it works:
-1. Every document in copperline-docs/ (HTML, PDF, Markdown, or plain text) is split
-   into one chunk per section. Each chunk starts with the document title and section
-   heading so it makes sense on its own, and records the file it came from.
+1. Every document in the document folder (default: copperline-docs/; HTML, PDF,
+   Markdown, or plain text) is split into one chunk per section. Each chunk starts
+   with the document title and section heading so it makes sense on its own, and
+   records the file it came from.
 2. The chunks are embedded with Chroma's built-in model (all-MiniLM-L6-v2) and stored
-   in week-03/chroma_db/ (kept out of Git).
+   in week-03/chroma_db/<folder name>/, one database per document folder (kept out
+   of Git).
 3. For each question, the 4 most similar chunks are retrieved and printed, then sent
    to Claude with instructions to answer only from them and cite the source file.
 """
@@ -24,9 +28,9 @@ import sys
 from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
-DOCS_DIR = HERE / "copperline-docs"
-DB_DIR = HERE / "chroma_db"
-COLLECTION_NAME = "copperline_docs"
+DEFAULT_DOCS_DIR = HERE / "copperline-docs"
+DB_ROOT = HERE / "chroma_db"  # one subfolder per document folder
+COLLECTION_NAME = "documents"
 
 # The API key lives outside the repo, in the folder that contains it.
 KEY_FOLDER = HERE.parent.parent
@@ -48,9 +52,8 @@ DOCUMENT_NOTES = {
     ),
 }
 
-SYSTEM_PROMPT = """You answer questions from Copperline Manufacturing employees about \
-the company's finance policies. You are given numbered source excerpts retrieved from \
-Copperline's finance documents.
+SYSTEM_PROMPT = """You answer questions about an organization's documents. You are \
+given numbered source excerpts retrieved from those documents.
 
 Rules:
 - Answer only from the provided sources. Do not use outside knowledge or assumptions \
@@ -268,13 +271,17 @@ def make_chunks(path):
     return chunks
 
 
-def open_collection(create=False):
+def db_dir_for(docs_dir):
+    return DB_ROOT / docs_dir.name
+
+
+def open_collection(docs_dir, create=False):
     import chromadb
     from chromadb.config import Settings
     from chromadb.utils import embedding_functions
 
     client = chromadb.PersistentClient(
-        path=str(DB_DIR), settings=Settings(anonymized_telemetry=False))
+        path=str(db_dir_for(docs_dir)), settings=Settings(anonymized_telemetry=False))
     embed = embedding_functions.DefaultEmbeddingFunction()
     if create:
         return client.create_collection(
@@ -283,12 +290,13 @@ def open_collection(create=False):
     return client.get_collection(COLLECTION_NAME, embedding_function=embed)
 
 
-def build_database():
-    files = sorted(p for p in DOCS_DIR.iterdir() if p.is_file())
-    if DB_DIR.exists():
-        shutil.rmtree(DB_DIR)
-    print(f"Building the document database from {DOCS_DIR.name}/ ...")
-    collection = open_collection(create=True)
+def build_database(docs_dir):
+    files = sorted(p for p in docs_dir.iterdir() if p.is_file())
+    db_dir = db_dir_for(docs_dir)
+    if db_dir.exists():
+        shutil.rmtree(db_dir)
+    print(f"Building the document database from {docs_dir.name}/ ...")
+    collection = open_collection(docs_dir, create=True)
 
     total = 0
     for path in files:
@@ -305,18 +313,18 @@ def build_database():
         )
         print(f"  {path.name}: {len(chunks)} chunks")
         total += len(chunks)
-    print(f"Done: {total} chunks stored in {DB_DIR.relative_to(HERE.parent)}\n")
+    print(f"Done: {total} chunks stored in {db_dir.relative_to(HERE.parent)}\n")
     return collection
 
 
-def get_collection():
+def get_collection(docs_dir):
     try:
-        collection = open_collection()
+        collection = open_collection(docs_dir)
         if collection.count() > 0:
             return collection
     except Exception:
         pass  # no database yet
-    return build_database()
+    return build_database(docs_dir)
 
 
 # ---------------------------------------------------------------------------
@@ -358,6 +366,7 @@ def load_api_key():
 
 
 def answer(client, question, hits):
+    """Stream Claude's answer to the screen and return its full text."""
     import anthropic
 
     sources = "\n\n".join(
@@ -366,6 +375,7 @@ def answer(client, question, hits):
     prompt = f"{sources}\n\nQuestion: {question}"
 
     print("Answer:")
+    parts, notice = [], None
     try:
         with client.messages.stream(
             model=MODEL,
@@ -375,21 +385,38 @@ def answer(client, question, hits):
         ) as stream:
             for text in stream.text_stream:
                 print(text, end="", flush=True)
+                parts.append(text)
             final = stream.get_final_message()
         print()
         if final.stop_reason == "refusal":
-            print("(Claude declined to answer this question.)")
+            notice = "(Claude declined to answer this question.)"
         elif final.stop_reason == "max_tokens":
-            print("(The answer was cut off because it reached the length limit.)")
+            notice = "(The answer was cut off because it reached the length limit.)"
     except anthropic.AuthenticationError:
-        print("\nError: the API key was rejected. Check the key file.")
+        notice = "Error: the API key was rejected. Check the key file."
     except anthropic.RateLimitError:
-        print("\nError: rate limit reached. Wait a moment and try again.")
+        notice = "Error: rate limit reached. Wait a moment and try again."
     except anthropic.APIStatusError as e:
-        print(f"\nAPI error {e.status_code}: {e.message}")
+        notice = f"API error {e.status_code}: {e.message}"
     except anthropic.APIConnectionError:
-        print("\nError: could not connect to the Claude API. Check your internet connection.")
+        notice = "Error: could not connect to the Claude API. Check your internet connection."
+    if notice:
+        print(notice)
+        parts.append(("\n" if parts else "") + notice)
     print()
+    return "".join(parts).strip()
+
+
+def save_run(path, question, hits, answer_text):
+    """Write the full run to a UTF-8 text file: chunks, then ANSWER, then the answer."""
+    lines = [f"Question: {question}", ""]
+    for rank, hit in enumerate(hits, 1):
+        lines += [f"Rank {rank} | similarity {hit['similarity']:.3f} | {hit['source']}",
+                  hit["text"], ""]
+    lines += ["ANSWER", answer_text, ""]
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text("\n".join(lines), encoding="utf-8")
+    print(f"Saved this run to {path}")
 
 
 def main():
@@ -399,14 +426,26 @@ def main():
         pass
 
     parser = argparse.ArgumentParser(
-        description="Answer questions from Copperline Manufacturing's finance documents.")
+        description="Answer questions from a folder of documents.")
     parser.add_argument("question", nargs="*", help="your question (omit for interactive mode)")
+    parser.add_argument("--docs", type=Path, default=DEFAULT_DOCS_DIR,
+                        help="folder of documents to answer from "
+                             "(default: week-03/copperline-docs)")
     parser.add_argument("--rebuild", action="store_true",
                         help="rebuild the database after adding or removing documents")
+    parser.add_argument("--save", type=Path, metavar="FILE",
+                        help="also write the retrieved chunks and the answer to this "
+                             "text file (UTF-8)")
     args = parser.parse_args()
 
-    collection = build_database() if args.rebuild else get_collection()
+    docs_dir = args.docs.resolve()
+    if not docs_dir.is_dir():
+        sys.exit(f"Document folder not found: {args.docs}")
     question = " ".join(args.question).strip()
+    if args.save and not question:
+        sys.exit("--save needs a question on the command line.")
+
+    collection = build_database(docs_dir) if args.rebuild else get_collection(docs_dir)
     if args.rebuild and not question:
         return
 
@@ -416,12 +455,14 @@ def main():
     def ask(q):
         hits = retrieve(collection, q)
         print_hits(hits)
-        answer(client, q, hits)
+        answer_text = answer(client, q, hits)
+        if args.save:
+            save_run(args.save, q, hits, answer_text)
 
     if question:
         ask(question)
         return
-    print("Ask a question about Copperline's finance documents (blank line to quit).")
+    print(f"Ask a question about the documents in {docs_dir.name}/ (blank line to quit).")
     while True:
         try:
             q = input("\nQuestion: ").strip()
