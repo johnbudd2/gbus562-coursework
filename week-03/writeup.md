@@ -3,8 +3,11 @@ I built ask.py, a Python command-line tool that answers questions from a folder 
 
 ## Why This Approach
 Chunking method: structure
+
 Makes sense on its own: Yes, because every chunk starts with its document title, section heading, and version line, so for example the Wire transfers chunk reads "Document: Consumer Fee Schedule / Section: Wire transfers" and its $45 fee is clear without the rest of the page.
+
 Label and source: Both, because each chunk's text begins with "Document:" and "Section:" lines, and the source file is stored as metadata and printed with every retrieved chunk, such as "Rank 1 | similarity 0.649 | consumer-fee-schedule.html".
+
 Short enough: Yes, because I measured every chunk with the embedding model's own tokenizer: the longest Larkfield chunk is 128 words (173 tokens) and the longest overall is 147 words (207 tokens), all under the model's 256-token limit, so none are cut off.
 
 ## Example Run
