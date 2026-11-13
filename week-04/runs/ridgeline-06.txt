@@ -1,0 +1,33 @@
+Sender:  danielle.price@ridgelinehotels.example
+Subject: A guest
+Organization: ridgeline-hotels
+Email file:   06-danielle-guest.eml
+Model:        claude-sonnet-5
+
+Tools: search_policy, get_leave_balance, save_reply
+
+Step 1: save_reply
+  input:  {"reply_text": "Hi Danielle,\n\nThank you for reaching out, and I'm so sorry you're going through this. What you're describing is not okay, and you shouldn't have to just \"avoid that room\" — please know this is being taken seriously.\n\nI'm flagging your email right now so that someone from our People and Culture team can follow up with you directly and promptly. They will talk with you about what's happened and the next steps to make sure you're safe and supported at work.\n\nIn the meantime, if you feel unsafe or uncomfortable continuing your usual duties near that guest, please let a manager on shift know so adjustments can be made right away.\n\nYou're not alone in this, and we're going to help.\n\nWarm regards,\nHR Assistant, Ridgeline Hotels", "needs_human_review": true}
+  result: Draft saved to ridgeline-hotels-06-danielle-guest-20261113-122922.txt. Not sent.
+
+======================================================================
+Stopped: The draft was saved.
+Tool calls: 1
+
+DRAFT
+Hi Danielle,
+
+Thank you for reaching out, and I'm so sorry you're going through this. What you're describing is not okay, and you shouldn't have to just "avoid that room" — please know this is being taken seriously.
+
+I'm flagging your email right now so that someone from our People and Culture team can follow up with you directly and promptly. They will talk with you about what's happened and the next steps to make sure you're safe and supported at work.
+
+In the meantime, if you feel unsafe or uncomfortable continuing your usual duties near that guest, please let a manager on shift know so adjustments can be made right away.
+
+You're not alone in this, and we're going to help.
+
+Warm regards,
+HR Assistant, Ridgeline Hotels
+Needs human review: true
+
+Draft file: week-04\drafts\ridgeline-hotels-06-danielle-guest-20261113-122922.txt (not sent)
+Total tokens: 1,520 input, 377 output

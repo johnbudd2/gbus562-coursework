@@ -1,0 +1,71 @@
+Sender:  brittany.cole@ridgelinehotels.example
+Subject: Honeymoon
+Organization: ridgeline-hotels
+Email file:   03-brittany-honeymoon.eml
+Model:        claude-sonnet-5
+
+Tools: search_policy, get_leave_balance, save_reply
+
+Step 1: get_leave_balance
+  input:  {}
+  result: Leave balance for Brittany Cole (brittany.cole@ridgelinehotels.example)
+Hotel: Ridgeline Taos
+Role: Server
+Supervisor: Amanda Ross
+PTO Days Remaining: 4
+Sick Days Remaining: 3
+Source: employees.csv
+
+Step 2: search_policy
+  input:  {"query": "PTO carryover to next calendar year"}
+  result: Top 4 HR document sections for "PTO carryover to next calendar year":
+
+[1] Source file: pto-policy.html | similarity 0.608
+Document: Paid Time Off (PTO) Policy
+Section: Carrying PTO into next year
+Document status: Effective this year. Owner: People and Culture.
+
+You can carry up to 3 unused PTO days...
+
+Step 3: search_policy
+  input:  {"query": "unpaid leave or additional time off options"}
+  result: Top 4 HR document sections for "unpaid leave or additional time off options":
+
+[1] Source file: pto-policy.html | similarity 0.521
+Document: Paid Time Off (PTO) Policy
+Section: Borrowing PTO you haven't earned yet
+Document status: Effective this year. Owner: People and Culture.
+
+If a planned absence...
+
+Step 4: save_reply
+  input:  {"reply_text": "Hi Brittany,\n\nCongratulations on your upcoming wedding! I'd love to help you plan this.\n\nHere's what I can tell you today (as of 11/13/2026):\n- Your current PTO balance is 4 days.\n- Your sick day balance is 3 days (separate from PTO and not usable for this kind of trip).\n\nSince your honeymoon would fall in January 2027 — a different calendar year — your balance by then depends on Ridgeline's carryover rule: per our PTO Policy (pto-policy.html, \"Carrying PTO into next year\"), you can carry up to 3 unused PTO days into the new year, with anything above that paid out in your first January paycheck. Because your exact balance in January will also depend on how much PTO you use between now and year-end and how much you accrue in January, I can't calculate the precise number you'll have available for your trip. I'm flagging this for a People & Culture team member to confirm the exact figure with you.\n\nA couple of things that may help either way:\n- If your balance ends up short of 6 days, our policy allows borrowing up to 3 PTO days against what you'll earn in the next six months (pto-policy.html, \"Borrowing PTO you haven't earned yet\"). This needs your general manager's approval and must be requested at least 30 days in advance, and if you leave Ridgeline before earning the days back, their value is deducted from your final paycheck.\n- Since you're requesting 6 consecutive days, our policy (pto-policy.html, \"Requesting PTO\") requires your supervisor's (Amanda Ross) approval at least 30 days in advance. I'd recommend submitting your request through the scheduling system soon to make sure you're within that window — and also check whether any of your hotel's blackout dates fall in that period, since those need GM approval as well.\n\nSomeone from People & Culture will follow up with you to confirm your exact available balance for January. Thanks for your patience, and congratulations again!\n\nBest,\nHR Assistant\n", "needs_human_review": true}
+  result: Draft saved to ridgeline-hotels-03-brittany-honeymoon-20261113-122728.txt. Not sent.
+
+======================================================================
+Stopped: The draft was saved.
+Tool calls: 4
+
+DRAFT
+Hi Brittany,
+
+Congratulations on your upcoming wedding! I'd love to help you plan this.
+
+Here's what I can tell you today (as of 11/13/2026):
+- Your current PTO balance is 4 days.
+- Your sick day balance is 3 days (separate from PTO and not usable for this kind of trip).
+
+Since your honeymoon would fall in January 2027 — a different calendar year — your balance by then depends on Ridgeline's carryover rule: per our PTO Policy (pto-policy.html, "Carrying PTO into next year"), you can carry up to 3 unused PTO days into the new year, with anything above that paid out in your first January paycheck. Because your exact balance in January will also depend on how much PTO you use between now and year-end and how much you accrue in January, I can't calculate the precise number you'll have available for your trip. I'm flagging this for a People & Culture team member to confirm the exact figure with you.
+
+A couple of things that may help either way:
+- If your balance ends up short of 6 days, our policy allows borrowing up to 3 PTO days against what you'll earn in the next six months (pto-policy.html, "Borrowing PTO you haven't earned yet"). This needs your general manager's approval and must be requested at least 30 days in advance, and if you leave Ridgeline before earning the days back, their value is deducted from your final paycheck.
+- Since you're requesting 6 consecutive days, our policy (pto-policy.html, "Requesting PTO") requires your supervisor's (Amanda Ross) approval at least 30 days in advance. I'd recommend submitting your request through the scheduling system soon to make sure you're within that window — and also check whether any of your hotel's blackout dates fall in that period, since those need GM approval as well.
+
+Someone from People & Culture will follow up with you to confirm your exact available balance for January. Thanks for your patience, and congratulations again!
+
+Best,
+HR Assistant
+Needs human review: true
+
+Draft file: week-04\drafts\ridgeline-hotels-03-brittany-honeymoon-20261113-122728.txt (not sent)
+Total tokens: 4,685 input, 1,489 output

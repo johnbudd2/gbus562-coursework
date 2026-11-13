@@ -1,9 +1,14 @@
-"""Hartwell Foods HR agent: drafts a reply to one employee email using Claude's tool use.
+"""HR email agent: drafts a reply to one employee email using Claude's tool use.
+
+It works for any organization folder laid out like week-04/hartwell-hr (the
+default) or week-04/ridgeline-hotels: hr-docs/, employees.csv, sample-emails/,
+and system_prompt.txt.
 
 For one email file it:
-1. Reads the sender's address from the From: header.
-2. Starts hr_mcp_server.py in employee mode (--as-employee <sender>), so
-   get_leave_balance can only ever return the sender's own balance.
+1. Reads the sender's address and subject from the email.
+2. Starts hr_mcp_server.py for the organization in employee mode
+   (--as-employee <sender>), so get_leave_balance can only ever return the
+   sender's own balance.
 3. Offers Claude the server's tools plus save_reply, which writes a draft to
    week-04/drafts/. Nothing is ever sent.
 4. Runs the tool loop, printing each step, and stops when the draft is saved,
@@ -11,6 +16,10 @@ For one email file it:
 
 Usage (from the top of the repository):
     .venv\\Scripts\\python.exe week-04\\agent.py --email week-04\\hartwell-hr\\sample-emails\\03-megan-time-off.eml
+    .venv\\Scripts\\python.exe week-04\\agent.py --org ridgeline-hotels --email week-04\\ridgeline-hotels\\sample-emails\\01-jenna-pto.eml --save week-04\\runs\\ridgeline-01.txt
+
+--org takes a folder name inside week-04 or a path to the folder. --save also
+writes everything the agent prints to that text file (UTF-8).
 
 The API key is read at runtime from API-Key.txt (or course_API.txt) in the folder
 above the repository. It is never printed or written to a file.
@@ -30,10 +39,11 @@ import anthropic
 from mcp import ClientSession
 from mcp.client.stdio import StdioServerParameters, stdio_client
 
+from hr_mcp_server import DEFAULT_ORG, resolve_org
+
 HERE = Path(__file__).resolve().parent
 REPO = HERE.parent
 SERVER = HERE / "hr_mcp_server.py"
-SYSTEM_PROMPT_FILE = HERE / "hartwell-hr" / "system_prompt.txt"
 DRAFTS_DIR = HERE / "drafts"
 KEY_FILES = [REPO.parent / "API-Key.txt", REPO.parent / "course_API.txt"]
 
@@ -68,6 +78,22 @@ SAVE_REPLY_TOOL = {
 }
 
 
+class Tee:
+    """Write to the terminal and to a file at the same time (for --save)."""
+
+    def __init__(self, terminal, file):
+        self.terminal, self.file = terminal, file
+
+    def write(self, text):
+        self.terminal.write(text)
+        self.file.write(text)
+        return len(text)
+
+    def flush(self):
+        self.terminal.flush()
+        self.file.flush()
+
+
 def load_api_key():
     for path in KEY_FILES:
         if path.is_file():
@@ -96,17 +122,20 @@ def preview(text):
     return text if len(text) <= PREVIEW_CHARS else text[:PREVIEW_CHARS] + "..."
 
 
-def save_draft(email_path, sender, subject, reply_text, needs_human_review):
+def review_line(needs_human_review):
+    return f"Needs human review: {'true' if needs_human_review else 'false'}"
+
+
+def save_draft(org_dir, email_path, sender, subject, reply_text, needs_human_review):
     DRAFTS_DIR.mkdir(exist_ok=True)
     stamp = datetime.now().strftime("%Y%m%d-%H%M%S")
-    path = DRAFTS_DIR / f"{email_path.stem}-{stamp}.txt"
+    path = DRAFTS_DIR / f"{org_dir.name}-{email_path.stem}-{stamp}.txt"
     reply_subject = subject if subject.lower().startswith("re:") else f"Re: {subject}"
     path.write_text(
         f"To: {sender}\n"
         f"Subject: {reply_subject}\n"
-        f"Needs human review: {'yes' if needs_human_review else 'no'}\n"
-        f"Status: DRAFT - not sent\n"
-        f"\n{reply_text.strip()}\n",
+        f"Status: not sent\n"
+        f"\nDRAFT\n{reply_text.strip()}\n{review_line(needs_human_review)}\n",
         encoding="utf-8",
     )
     return path
@@ -122,18 +151,20 @@ async def call_mcp_tool(session, name, arguments):
     return text or "(no output)", bool(getattr(result, "is_error", False))
 
 
-async def run(email_path):
+async def run(org_dir, email_path):
     sender, subject, body = read_email(email_path)
-    system_prompt = SYSTEM_PROMPT_FILE.read_text(encoding="utf-8")
+    system_prompt = (org_dir / "system_prompt.txt").read_text(encoding="utf-8")
     client = anthropic.AsyncAnthropic(api_key=load_api_key())
 
-    print(f"Email:  {email_path.name}")
-    print(f"Sender: {sender}")
-    print(f"Model:  {MODEL}\n")
+    print(f"Sender:  {sender}")
+    print(f"Subject: {subject}")
+    print(f"Organization: {org_dir.name}")
+    print(f"Email file:   {email_path.name}")
+    print(f"Model:        {MODEL}\n")
 
     server = StdioServerParameters(
         command=sys.executable,
-        args=[str(SERVER), "--as-employee", sender],
+        args=[str(SERVER), "--org", str(org_dir), "--as-employee", sender],
         cwd=str(REPO),
     )
     async with stdio_client(server) as (read, write):
@@ -146,7 +177,7 @@ async def run(email_path):
                  "input_schema": t.input_schema}
                 for t in mcp_tools
             ] + [SAVE_REPLY_TOOL]
-            print("Tools:  " + ", ".join(t["name"] for t in tools) + "\n")
+            print("Tools: " + ", ".join(t["name"] for t in tools) + "\n")
 
             messages = [{
                 "role": "user",
@@ -220,7 +251,7 @@ async def run(email_path):
                     if block.name == "save_reply":
                         draft = block.input
                         draft_path = save_draft(
-                            email_path, sender, subject,
+                            org_dir, email_path, sender, subject,
                             draft["reply_text"], draft["needs_human_review"])
                         text, is_error = f"Draft saved to {draft_path.name}. Not sent.", False
                     elif block.name in mcp_names:
@@ -240,12 +271,14 @@ async def run(email_path):
 
     print("=" * 70)
     print(f"Stopped: {stop_reason_text}")
-    print(f"Tool calls: {tool_calls}")
-    if draft_path is not None:
-        print(f"\nDraft ({draft_path.relative_to(REPO)}):\n")
-        print(draft_path.read_text(encoding="utf-8"))
+    print(f"Tool calls: {tool_calls}\n")
+    if draft is not None:
+        print("DRAFT")
+        print(draft["reply_text"].strip())
+        print(review_line(draft["needs_human_review"]))
+        print(f"\nDraft file: {draft_path.relative_to(REPO)} (not sent)")
     else:
-        print("\nNo draft was saved.")
+        print("No draft was saved.")
     print(f"Total tokens: {tokens_in:,} input, {tokens_out:,} output")
 
 
@@ -253,14 +286,38 @@ def main():
     for stream in (sys.stdout, sys.stderr):
         stream.reconfigure(encoding="utf-8")
     parser = argparse.ArgumentParser(
-        description="Draft a reply to one Hartwell Foods employee email. "
-                    "Saves a draft only; never sends.")
+        description="Draft a reply to one employee email. Saves a draft only; "
+                    "never sends.")
     parser.add_argument("--email", required=True, type=Path,
                         help="path of one email file (.eml)")
+    parser.add_argument("--org", metavar="FOLDER", default=DEFAULT_ORG,
+                        help="organization folder: a name inside week-04 or a path "
+                             f"(default: {DEFAULT_ORG})")
+    parser.add_argument("--save", metavar="FILE", type=Path,
+                        help="also write everything printed to this text file (UTF-8)")
     args = parser.parse_args()
+
     if not args.email.is_file():
         parser.error(f"email file not found: {args.email}")
-    asyncio.run(run(args.email.resolve()))
+    org_dir = resolve_org(args.org)
+    if not org_dir.is_dir():
+        parser.error(f"organization folder not found: {args.org}")
+    for needed in ("hr-docs", "employees.csv", "system_prompt.txt"):
+        if not (org_dir / needed).exists():
+            parser.error(f"{org_dir} has no {needed}")
+
+    if args.save is None:
+        asyncio.run(run(org_dir, args.email.resolve()))
+        return
+    args.save.parent.mkdir(parents=True, exist_ok=True)
+    with args.save.open("w", encoding="utf-8") as f:
+        terminal = sys.stdout
+        sys.stdout = Tee(terminal, f)
+        try:
+            asyncio.run(run(org_dir, args.email.resolve()))
+        finally:
+            sys.stdout = terminal
+    print(f"Output saved to {args.save}")
 
 
 if __name__ == "__main__":
