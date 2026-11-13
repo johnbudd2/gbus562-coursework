@@ -1,0 +1,5 @@
+# Packages for week-04/hr_mcp_server.py. Install into the repository's .venv:
+#   .venv\Scripts\python.exe -m pip install -r week-04\requirements.txt
+mcp
+chromadb
+beautifulsoup4

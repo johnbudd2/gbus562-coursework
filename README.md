@@ -16,3 +16,6 @@ This repository holds the materials created in UMW's GBUS 562 course (AI Languag
    - [ask.py](week-03/ask.py): a RAG tool that answers questions from Copperline Manufacturing's finance documents, built with Claude Code.
    - [Larkfield runs](week-03/runs/): the same overdraft-fee question asked about Larkfield Credit Union's documents [before](week-03/runs/q1-before.txt) and [after](week-03/runs/q1-after.txt) removing a superseded version of the fee schedule, plus five more test questions covering card fees, fraud liability, multi-document refund approval, funds availability, and an out-of-scope question.
    - [Writeup](week-03/writeup.md): what I built, why I chose section-based chunking, one full example run, and a reflection on the superseded fee schedule and the out-of-scope question.
+4. week-04
+   - Week 4: an AI agent that prepares replies to HR emails using tools from an MCP server, built with Claude Code.
+   - [hr_mcp_server.py](week-04/hr_mcp_server.py): the MCP server, with two tools for Hartwell Foods' HR data: `search_policy` (the 4 closest HR document sections, with source files) and `get_leave_balance` (from `employees.csv`, by work email for HR staff, or limited to one employee when started with `--as-employee`).

@@ -6,3 +6,6 @@ __pycache__/
 
 # Chroma vector database (rebuild with: python week-03/ask.py --rebuild)
 week-03/chroma_db/
+
+# Chroma vector database for the week-04 MCP server (rebuild with: python week-04/hr_mcp_server.py --rebuild)
+week-04/chroma_db/
