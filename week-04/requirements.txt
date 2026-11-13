@@ -1,5 +1,6 @@
-# Packages for week-04/hr_mcp_server.py. Install into the repository's .venv:
+# Packages for week-04/hr_mcp_server.py and week-04/agent.py. Install into the repository's .venv:
 #   .venv\Scripts\python.exe -m pip install -r week-04\requirements.txt
+anthropic
 mcp
 chromadb
 beautifulsoup4

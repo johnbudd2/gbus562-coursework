@@ -1,0 +1,29 @@
+To: megan.turner@hartwellfoods.example
+Subject: Re: Family trip
+Needs human review: yes
+Status: DRAFT - not sent
+
+Hi Megan,
+
+Thanks for reaching out! Here's what I can tell you based on our policies and your current records:
+
+**Your current balance:** As of today, you have 7 vacation days left (source: employees.csv).
+
+**The timing complication:** Since your trip is about two months out, it will fall in January 2027 — a different calendar year. Our carry-over policy states:
+
+> "You can carry up to 5 unused vacation days into the next calendar year. Carried days must be used within the first three months of that year or they are lost. Unused days above the 5-day limit are lost at the end of the year and are not paid out." (leave-policy.html)
+
+This means your actual available balance in January 2027 will depend on:
+- How many vacation days you use between now and the end of 2026 (which determines how many of your current days carry over, up to a max of 5), and
+- Your new vacation day allocation for 2027, which I don't have visibility into right now.
+
+Because of this, I can't give you a definitive yes/no on whether you'll have the full 10 days available — I'm flagging this for an HR team member to confirm your exact balance closer to the date.
+
+**A few other relevant policy notes:**
+- Since you're requesting more than 5 consecutive business days, you'll need your manager's approval at least 10 business days in advance (leave-policy.html).
+- If it turns out you're short on vacation days, you have the option to request up to 5 days of unpaid leave to cover the gap, which requires approval from both your manager and HR (leave-policy.html).
+
+I'd recommend starting the approval conversation with your manager, Lena Fischer, soon given the advance-notice requirement, and HR will follow up with you to confirm the exact number of vacation days you'll have available for the trip.
+
+Best,
+HR Assistant

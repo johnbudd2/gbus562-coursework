@@ -19,3 +19,4 @@ This repository holds the materials created in UMW's GBUS 562 course (AI Languag
 4. week-04
    - Week 4: an AI agent that prepares replies to HR emails using tools from an MCP server, built with Claude Code.
    - [hr_mcp_server.py](week-04/hr_mcp_server.py): the MCP server, with two tools for Hartwell Foods' HR data: `search_policy` (the 4 closest HR document sections, with source files) and `get_leave_balance` (from `employees.csv`, by work email for HR staff, or limited to one employee when started with `--as-employee`).
+   - [agent.py](week-04/agent.py): a command-line agent that drafts a reply to one employee email. It starts the MCP server limited to the sender, lets Claude (`claude-sonnet-5`) use its tools, and saves the reply to `week-04/drafts/` with a needs-human-review flag. It never sends anything, and it stops after 10 tool calls.
