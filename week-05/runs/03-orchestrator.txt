@@ -1,0 +1,33 @@
+Coordinator: orchestrator (Claude chooses the specialists)
+Email file:  03-keystone-on-schedule.eml
+From:        b.foley@keystonebattery.example
+Subject:     PO-7790 - BP-48 battery packs - shipped on schedule
+Model:       claude-sonnet-5
+Tools:       run_supply_analyst, draft_supplier_reply, draft_customer_notice, finish
+   [orchestrator] tokens: 1,525 in, 340 out
+
+======================================================================
+Choice 1: finish {"summary": "Keystone Battery confirmed PO-7790 (150 BP-48 battery packs) shipped on schedule and will arrive on time. This is a routine on-track shipment notice with no change to quantity or timing, so no customer orders are at risk and no supplier reply is needed. No further action required.", "needs_person_decision": false}
+======================================================================
+
+======================================================================
+SUMMARY (orchestrator, 03-keystone-on-schedule.eml)
+======================================================================
+Tool calls by the orchestrator: 1 of 10
+Orchestrator's summary: Keystone Battery confirmed PO-7790 (150 BP-48 battery packs) shipped on schedule and will arrive on time. This is a routine on-track shipment notice with no change to quantity or timing, so no customer orders are at risk and no supplier reply is needed. No further action required.
+Orchestrator says a person must decide: no
+Supplier reply: not drafted (the orchestrator didn't ask for one)
+
+Drafts saved: 0
+
+Drafts marked for a person: 0
+
+Decisions for a person: 0
+
+Tokens by specialist
+  specialist         calls     input    output
+  orchestrator           1     1,525       340
+  total                        1,525       340
+
+Total tokens: 1,525 input, 340 output (1,865 in all)
+Nothing was sent.

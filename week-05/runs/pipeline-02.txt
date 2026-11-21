@@ -1,0 +1,86 @@
+Coordinator: pipeline (fixed order)
+Email file:  02-kendall-tire-options.eml
+From:        l.moreno@kendalltire.example
+Subject:     PO-7795 - TR-29 tires - two options, please choose
+Model:       claude-sonnet-5
+
+======================================================================
+Step 1: supply analyst
+======================================================================
+
+>> HANDOFF  pipeline -> supply analyst: supplier email 02-kendall-tire-options.eml
+   PO-7795 - TR-29 tires - two options, please choose | Hi, About PO-7795 for 400 TR-29 trail tires: a mixing machine at our plant is down for repairs, so we can't fill the whole order at once. We can offer two options: Option 1: Ship 160 tires on the scheduled date, and the remaining 240 two weeks lat...
+   [supply analyst] tools: check_coverage, get_orders_for_part, get_part
+   [supply analyst] tokens: 2,117 in, 135 out
+   [supply analyst] tool 1: get_part {"part_id": "TR-29"}
+      result: { "part_id": "TR-29", "description": "29-inch trail tire", "supplier": "Kendall Tire Supply", "on_hand": 120, "scheduled_shipments": [ { "po_number": "PO-7795",...
+   [supply analyst] tool 2: get_orders_for_part {"part_id": "TR-29"}
+      result: { "part_id": "TR-29", "total_units_needed": 300, "orders": [ { "order_id": "O-1046", "customer": "Hilltop Outfitters", "model": "Trail 29", "bikes": 80, "parts_...
+   [supply analyst] tokens: 2,850 in, 264 out
+   [supply analyst] tool 3: check_coverage {"part_id": "TR-29", "arrivals": [{"day": 8, "qty": 160}, {"day": 22, "qty": 240}]}
+      result: { "part_id": "TR-29", "on_hand": 120, "arrivals_used": [ { "qty": 160, "day": 8 }, { "qty": 240, "day": 22 } ], "orders_short": 0, "units_short_total": 0, "orde...
+   [supply analyst] tool 4: check_coverage {"part_id": "TR-29", "arrivals": [{"day": 12, "qty": 400}]}
+      result: { "part_id": "TR-29", "on_hand": 120, "arrivals_used": [ { "qty": 400, "day": 12 } ], "orders_short": 1, "units_short_total": 40, "orders": [ { "order_id": "O-1...
+   [supply analyst] tokens: 3,898 in, 521 out
+   [supply analyst] tool calls: 4
+
+>> HANDOFF  supply analyst -> pipeline: brief (1 order(s) at risk, 2 option(s), 1 decision(s) for a person)
+   {"part_id": "TR-29", "what_changed": "PO-7795 (400 TR-29 tires, originally due day 8) will now arrive split as either 160 on day 8 + 240 on day 22 (Option 1), or all 400 together on day 12 (Option 2, the supplier's default if no reply is given).", "orders_at_risk": [{"order_id": "O-1046", "customer"...
+
+======================================================================
+Step 2: customer notices (1 order(s) at risk)
+======================================================================
+
+>> HANDOFF  pipeline -> customer writer: facts for order O-1046 only
+   {"order_id": "O-1046", "customer": "Hilltop Outfitters", "model": "Trail 29", "quantity": 80, "planned_ship_day": 9, "expected_ship_day": 12, "days_later_than_planned": 3, "days_are_counted_from": "today, 2026-11-21"}
+   [customer writer] tokens: 392 in, 169 out
+
+>> HANDOFF  customer writer -> reviewer: draft for the customer
+   Dear Hilltop Outfitters, We're writing to update you on order O-1046 for 80 units of the Trail 29. This order is now expected to ship 3 days later than originally planned. We're sorry for the inconvenience this may cause. The delay is due to a delay in a part from one of our suppliers. We are workin...
+   [reviewer] tokens: 641 in, 288 out
+
+>> HANDOFF  reviewer -> pipeline: APPROVE after 0 revision(s)
+   APPROVE
+   saved week-05\drafts\02-kendall-tire-options-pipeline-20261121-185205\customer-O-1046.txt
+
+======================================================================
+Step 3: reply to the supplier
+======================================================================
+
+>> HANDOFF  pipeline -> supplier writer: supplier email + brief (customer names removed)
+   {"part_id": "TR-29", "what_changed": "PO-7795 (400 TR-29 tires, originally due day 8) will now arrive split as either 160 on day 8 + 240 on day 22 (Option 1), or all 400 together on day 12 (Option 2, the supplier's default if no reply is given).", "orders_at_risk": [{"order_id": "O-1046", "units_sho...
+   [supplier writer] tokens: 1,108 in, 405 out
+
+>> HANDOFF  supplier writer -> reviewer: draft for the supplier
+   Hi Lisa, Thank you for the update on PO-7795. We understand the mixing machine issue means the 400 TR-29 tires will now arrive either as 160 on day 8 plus 240 on day 22 (Option 1), or all 400 together on day 12 (Option 2). Under Option 2, one of our orders would be short 40 units and delayed by 3 da...
+   [reviewer] tokens: 1,348 in, 403 out
+
+>> HANDOFF  reviewer -> pipeline: APPROVE after 0 revision(s)
+   APPROVE
+   saved week-05\drafts\02-kendall-tire-options-pipeline-20261121-185205\supplier-reply.txt
+
+======================================================================
+SUMMARY (pipeline, 02-kendall-tire-options.eml)
+======================================================================
+What changed: PO-7795 (400 TR-29 tires, originally due day 8) will now arrive split as either 160 on day 8 + 240 on day 22 (Option 1), or all 400 together on day 12 (Option 2, the supplier's default if no reply is given).
+Supplier reply: drafted
+
+Drafts saved: 2  (in week-05\drafts\02-kendall-tire-options-pipeline-20261121-185205)
+  - customer-O-1046.txt      to buying@hilltopoutfitters.example       reviewer APPROVE (0 revision(s)), ok
+  - supplier-reply.txt       to l.moreno@kendalltire.example           reviewer APPROVE (0 revision(s)), ok
+
+Drafts marked for a person: 0
+
+Decisions for a person: 1
+  - Choose between Option 1 (no orders at risk, covers all three orders on time) and Option 2 (puts order O-1046 3 days late, short 40 units, though no late penalty applies). Option 1 appears clearly preferable and should be confirmed with the supplier within the 2-business-day deadline, since the supplier defaults to Option 2 if no response is received.
+
+Tokens by specialist
+  specialist         calls     input    output
+  supply analyst         3     8,865       920
+  customer writer        1       392       169
+  reviewer               2     1,989       691
+  supplier writer        1     1,108       405
+  total                       12,354     2,185
+
+Total tokens: 12,354 input, 2,185 output (14,539 in all)
+Nothing was sent.

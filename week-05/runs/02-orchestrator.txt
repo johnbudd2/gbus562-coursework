@@ -1,0 +1,99 @@
+Coordinator: orchestrator (Claude chooses the specialists)
+Email file:  02-kendall-tire-options.eml
+From:        l.moreno@kendalltire.example
+Subject:     PO-7795 - TR-29 tires - two options, please choose
+Model:       claude-sonnet-5
+Tools:       run_supply_analyst, draft_supplier_reply, draft_customer_notice, finish
+   [orchestrator] tokens: 1,636 in, 55 out
+
+======================================================================
+Choice 1: run_supply_analyst 
+======================================================================
+
+>> HANDOFF  orchestrator -> supply analyst: supplier email 02-kendall-tire-options.eml
+   PO-7795 - TR-29 tires - two options, please choose | Hi, About PO-7795 for 400 TR-29 trail tires: a mixing machine at our plant is down for repairs, so we can't fill the whole order at once. We can offer two options: Option 1: Ship 160 tires on the scheduled date, and the remaining 240 two weeks lat...
+   [supply analyst] tools: check_coverage, get_orders_for_part, get_part
+   [supply analyst] tokens: 2,117 in, 125 out
+   [supply analyst] tool 1: get_part {"part_id": "TR-29"}
+      result: { "part_id": "TR-29", "description": "29-inch trail tire", "supplier": "Kendall Tire Supply", "on_hand": 120, "scheduled_shipments": [ { "po_number": "PO-7795",...
+   [supply analyst] tool 2: get_orders_for_part {"part_id": "TR-29"}
+      result: { "part_id": "TR-29", "total_units_needed": 300, "orders": [ { "order_id": "O-1046", "customer": "Hilltop Outfitters", "model": "Trail 29", "bikes": 80, "parts_...
+   [supply analyst] tokens: 2,840 in, 281 out
+   [supply analyst] tool 3: check_coverage {"part_id": "TR-29", "arrivals": [{"day": 8, "qty": 160}, {"day": 22, "qty": 240}]}
+      result: { "part_id": "TR-29", "on_hand": 120, "arrivals_used": [ { "qty": 160, "day": 8 }, { "qty": 240, "day": 22 } ], "orders_short": 0, "units_short_total": 0, "orde...
+   [supply analyst] tool 4: check_coverage {"part_id": "TR-29", "arrivals": [{"day": 12, "qty": 400}]}
+      result: { "part_id": "TR-29", "on_hand": 120, "arrivals_used": [ { "qty": 400, "day": 12 } ], "orders_short": 1, "units_short_total": 40, "orders": [ { "order_id": "O-1...
+   [supply analyst] tokens: 3,905 in, 480 out
+   [supply analyst] tool calls: 4
+
+>> HANDOFF  supply analyst -> orchestrator: brief (1 order(s) at risk, 2 option(s), 2 decision(s) for a person)
+   {"part_id": "TR-29", "what_changed": "Supplier offers either 160 tires on day 8 plus 240 on day 22 (Option 1), or all 400 tires together on day 12 (Option 2), instead of the original single shipment of 400 on day 8.", "orders_at_risk": [{"order_id": "O-1046", "customer": "Hilltop Outfitters", "units...
+   [orchestrator] tokens: 2,174 in, 646 out
+
+======================================================================
+Choice 2: draft_supplier_reply 
+======================================================================
+
+>> HANDOFF  orchestrator -> supplier writer: supplier email + brief (customer names removed)
+   {"part_id": "TR-29", "what_changed": "Supplier offers either 160 tires on day 8 plus 240 on day 22 (Option 1), or all 400 tires together on day 12 (Option 2), instead of the original single shipment of 400 on day 8.", "orders_at_risk": [{"order_id": "O-1046", "units_short": 40, "ship_day": 9, "ready...
+   [supplier writer] tokens: 1,072 in, 445 out
+
+>> HANDOFF  supplier writer -> reviewer: draft for the supplier
+   Hi Lisa, Thank you for letting us know about PO-7795. We understand the two options as follows: Option 1 would ship 160 tires on day 8 and the remaining 240 on day 22, while Option 2 would hold the full 400 tires and ship them together on day 12. Based on our review, Option 2 would leave one of our ...
+   [reviewer] tokens: 1,359 in, 777 out
+
+>> HANDOFF  reviewer -> orchestrator: APPROVE after 0 revision(s)
+   APPROVE
+   saved week-05\drafts\02-kendall-tire-options-orchestrator-20261121-184514\supplier-reply.txt
+
+======================================================================
+Choice 3: draft_customer_notice {"order_id": "O-1046"}
+======================================================================
+
+>> HANDOFF  orchestrator -> customer writer: facts for order O-1046 only
+   {"order_id": "O-1046", "customer": "Hilltop Outfitters", "model": "Trail 29", "quantity": 80, "planned_ship_day": 9, "expected_ship_day": 12, "days_later_than_planned": 3, "days_are_counted_from": "today, 2026-11-21"}
+   [customer writer] tokens: 392 in, 170 out
+
+>> HANDOFF  customer writer -> reviewer: draft for the customer
+   Dear Hilltop Outfitters, We're writing to update you on order O-1046 for 80 units of the Trail 29. Your order is now expected to ship 3 days later than originally planned. We apologize for this delay. The cause is a delay in a part from one of our suppliers. We are working to get your order shipped ...
+   [reviewer] tokens: 629 in, 255 out
+
+>> HANDOFF  reviewer -> orchestrator: APPROVE after 0 revision(s)
+   APPROVE
+   saved week-05\drafts\02-kendall-tire-options-orchestrator-20261121-184514\customer-O-1046.txt
+   [orchestrator] tokens: 3,423 in, 449 out
+
+======================================================================
+Choice 4: finish {"summary": "Kendall Tire Supply can't fulfill PO-7795 (400 TR-29 tires) on schedule due to equipment downtime, offering two options: (1) split shipment - 160 on day 8 + 240 on day 22, or (2) full 400 together on day 12 (their default if we don't respond). Analysis shows Option 1 covers all customer orders with no shortfall, while Option 2 (the default) leaves order O-1046 (Hilltop Outfitters) 40 units short and 3 days late. A supplier reply draft has been prepared asking about further mitigation and confirming we'll respond within the 2-day window - it still needs a person to pick and send the preferred option (recommend Option 1 to avoid any shortfall). A precautionary customer notice for O-1046 has also been drafted in case Option 2 ends up being used. Both drafts are saved for review/sending; no other orders are affected.", "needs_person_decision": true}
+======================================================================
+
+======================================================================
+SUMMARY (orchestrator, 02-kendall-tire-options.eml)
+======================================================================
+Tool calls by the orchestrator: 4 of 10
+Orchestrator's summary: Kendall Tire Supply can't fulfill PO-7795 (400 TR-29 tires) on schedule due to equipment downtime, offering two options: (1) split shipment - 160 on day 8 + 240 on day 22, or (2) full 400 together on day 12 (their default if we don't respond). Analysis shows Option 1 covers all customer orders with no shortfall, while Option 2 (the default) leaves order O-1046 (Hilltop Outfitters) 40 units short and 3 days late. A supplier reply draft has been prepared asking about further mitigation and confirming we'll respond within the 2-day window - it still needs a person to pick and send the preferred option (recommend Option 1 to avoid any shortfall). A precautionary customer notice for O-1046 has also been drafted in case Option 2 ends up being used. Both drafts are saved for review/sending; no other orders are affected.
+Orchestrator says a person must decide: yes
+What changed: Supplier offers either 160 tires on day 8 plus 240 on day 22 (Option 1), or all 400 tires together on day 12 (Option 2), instead of the original single shipment of 400 on day 8.
+Supplier reply: drafted
+
+Drafts saved: 2  (in week-05\drafts\02-kendall-tire-options-orchestrator-20261121-184514)
+  - supplier-reply.txt       to l.moreno@kendalltire.example           reviewer APPROVE (0 revision(s)), ok
+  - customer-O-1046.txt      to buying@hilltopoutfitters.example       reviewer APPROVE (0 revision(s)), ok
+
+Drafts marked for a person: 0
+
+Decisions for a person: 2
+  - Choose between Option 1 (fully covers all orders, no shortfalls) and Option 2 (default if no reply, but leaves order O-1046 40 units short, ready day 12, 3 days late).
+  - Reply to Kendall Tire Supply within two business days with the chosen option, otherwise Option 2 will be applied by default.
+
+Tokens by specialist
+  specialist         calls     input    output
+  orchestrator           3     7,233     1,150
+  supply analyst         3     8,862       886
+  supplier writer        1     1,072       445
+  reviewer               2     1,988     1,032
+  customer writer        1       392       170
+  total                       19,547     3,683
+
+Total tokens: 19,547 input, 3,683 output (23,230 in all)
+Nothing was sent.

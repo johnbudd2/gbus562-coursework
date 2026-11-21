@@ -1,0 +1,141 @@
+Coordinator: orchestrator (Claude chooses the specialists)
+Email file:  01-northgate-controller-delay.eml
+From:        k.walsh@northgatedrive.example
+Subject:     PO-7781 - MC-500 controllers - revised shipment schedule
+Model:       claude-sonnet-5
+Tools:       run_supply_analyst, draft_supplier_reply, draft_customer_notice, finish
+   [orchestrator] tokens: 1,629 in, 58 out
+
+======================================================================
+Choice 1: run_supply_analyst 
+======================================================================
+
+>> HANDOFF  orchestrator -> supply analyst: supplier email 01-northgate-controller-delay.eml
+   PO-7781 - MC-500 controllers - revised shipment schedule | Hello, I'm writing about PO-7781 for 400 MC-500 motor controllers. Our chip supplier has had a production problem, and we can't ship the full order on the scheduled date. We can ship 120 of the 400 controllers on the scheduled date. The rema...
+   [supply analyst] tools: check_coverage, get_orders_for_part, get_part
+   [supply analyst] tokens: 2,110 in, 144 out
+   [supply analyst] tool 1: get_part {"part_id": "MC-500"}
+      result: { "part_id": "MC-500", "description": "Motor controller", "supplier": "Northgate Drive Systems", "on_hand": 40, "scheduled_shipments": [ { "po_number": "PO-7781...
+   [supply analyst] tool 2: get_orders_for_part {"part_id": "MC-500"}
+      result: { "part_id": "MC-500", "total_units_needed": 340, "orders": [ { "order_id": "O-1041", "customer": "Riverside Cycles", "model": "Commuter E", "bikes": 40, "parts...
+   [supply analyst] tokens: 3,297 in, 205 out
+   [supply analyst] tool 3: check_coverage {"part_id": "MC-500", "arrivals": [{"qty": 120, "day": 5}, {"qty": 280, "day": 26}]}
+      result: { "part_id": "MC-500", "on_hand": 40, "arrivals_used": [ { "qty": 120, "day": 5 }, { "qty": 280, "day": 26 } ], "orders_short": 3, "units_short_total": 90, "ord...
+   [supply analyst] tokens: 4,263 in, 570 out
+   [supply analyst] tool calls: 3
+
+>> HANDOFF  supply analyst -> orchestrator: brief (3 order(s) at risk, 0 option(s), 2 decision(s) for a person)
+   {"part_id": "MC-500", "what_changed": "Of the 400 MC-500 controllers on PO-7781, only 120 will arrive on the originally scheduled day 5, with the remaining 280 delayed to day 26 (three weeks later).", "orders_at_risk": [{"order_id": "O-1043", "customer": "City of Ashford Bike Share", "units_short": ...
+   [orchestrator] tokens: 2,254 in, 194 out
+
+======================================================================
+Choice 2: draft_supplier_reply 
+======================================================================
+
+>> HANDOFF  orchestrator -> supplier writer: supplier email + brief (customer names removed)
+   {"part_id": "MC-500", "what_changed": "Of the 400 MC-500 controllers on PO-7781, only 120 will arrive on the originally scheduled day 5, with the remaining 280 delayed to day 26 (three weeks later).", "orders_at_risk": [{"order_id": "O-1043", "units_short": 10, "ship_day": 14, "ready_day": 26}, {"or...
+   [supplier writer] tokens: 1,079 in, 484 out
+
+>> HANDOFF  supplier writer -> reviewer: draft for the supplier
+   Hello Karen, Thank you for the update on PO-7781. To confirm our understanding: 120 of the 400 MC-500 controllers will ship on the original day 5 schedule, with the remaining 280 units following on day 26. This split shipment leaves us short a total of 90 units across three of our orders in the inte...
+   [reviewer] tokens: 1,372 in, 420 out
+
+>> HANDOFF  reviewer -> orchestrator: APPROVE after 0 revision(s)
+   APPROVE
+   saved week-05\drafts\01-northgate-controller-delay-orchestrator-20261121-184830\supplier-reply.txt
+
+======================================================================
+Choice 3: draft_customer_notice {"order_id": "O-1043"}
+======================================================================
+
+>> HANDOFF  orchestrator -> customer writer: facts for order O-1043 only
+   {"order_id": "O-1043", "customer": "City of Ashford Bike Share", "model": "Commuter E", "quantity": 100, "planned_ship_day": 14, "expected_ship_day": 26, "days_later_than_planned": 12, "days_are_counted_from": "today, 2026-11-21"}
+   [customer writer] tokens: 393 in, 187 out
+
+>> HANDOFF  customer writer -> reviewer: draft for the customer
+   Dear City of Ashford Bike Share, We're writing to update you on order O-1043 for 100 Commuter E bicycles. Due to a delay in a part from one of our suppliers, this order is now expected to ship 12 days later than originally planned. We apologize for this delay and any inconvenience it causes. If you ...
+   [reviewer] tokens: 647 in, 528 out
+
+>> HANDOFF  reviewer -> orchestrator: APPROVE after 0 revision(s)
+   APPROVE is not correct — the draft needs revision. REVISE 4. The draft mentions "costs" ("If you have questions about costs or contract terms related to this order..."). A customer-facing draft must not mention cost at all. Remove this sentence or rephrase to omit any reference to costs (e.g., "If y...
+   saved week-05\drafts\01-northgate-controller-delay-orchestrator-20261121-184830\customer-O-1043.txt  ** NEEDS A PERSON: order O-1043 has a late penalty
+
+======================================================================
+Choice 4: draft_customer_notice {"order_id": "O-1044"}
+======================================================================
+
+>> HANDOFF  orchestrator -> customer writer: facts for order O-1044 only
+   {"order_id": "O-1044", "customer": "Main Street Bikes", "model": "Cargo E", "quantity": 30, "planned_ship_day": 18, "expected_ship_day": 26, "days_later_than_planned": 8, "days_are_counted_from": "today, 2026-11-21"}
+   [customer writer] tokens: 390 in, 162 out
+
+>> HANDOFF  customer writer -> reviewer: draft for the customer
+   Dear Main Street Bikes, We're writing about your order O-1044 for 30 Cargo E bicycles. This order is now expected to ship 8 days later than originally planned. We apologize for this delay. It is due to a delay in a part from one of our suppliers. We will keep you updated on the progress of your orde...
+   [reviewer] tokens: 632 in, 205 out
+
+>> HANDOFF  reviewer -> orchestrator: APPROVE after 0 revision(s)
+   APPROVE
+   saved week-05\drafts\01-northgate-controller-delay-orchestrator-20261121-184830\customer-O-1044.txt
+
+======================================================================
+Choice 5: draft_customer_notice {"order_id": "O-1045"}
+======================================================================
+
+>> HANDOFF  orchestrator -> customer writer: facts for order O-1045 only
+   {"order_id": "O-1045", "customer": "Lakeview Rentals", "model": "Commuter E", "quantity": 50, "planned_ship_day": 21, "expected_ship_day": 26, "days_later_than_planned": 5, "days_are_counted_from": "today, 2026-11-21"}
+   [customer writer] tokens: 391 in, 132 out
+
+>> HANDOFF  customer writer -> reviewer: draft for the customer
+   Dear Lakeview Rentals, We're writing to update you on order O-1045 for 50 units of the Commuter E. This order is now expected to ship 5 days later than planned. We apologize for this delay. It is due to a delay in a part from one of our suppliers. We appreciate your patience and will keep you inform...
+   [reviewer] tokens: 603 in, 307 out
+
+>> HANDOFF  reviewer -> orchestrator: APPROVE after 0 revision(s)
+   APPROVE
+   saved week-05\drafts\01-northgate-controller-delay-orchestrator-20261121-184830\customer-O-1045.txt
+   [orchestrator] tokens: 3,552 in, 534 out
+
+======================================================================
+Choice 6: finish {"summary": "Northgate Drive Systems (supplier) notified that PO-7781 for 400 MC-500 controllers will ship in two parts: 120 on the original day 5, and the remaining 280 delayed to day 26 (3 weeks late) due to a chip production problem at their end. This puts three customer orders at risk, totaling 90 units short in the interim:\n- O-1043 (City of Ashford Bike Share): 10 units short, 12 days late, carries a LATE PENALTY - needs person decision\n- O-1044 (Main Street Bikes): 30 units short, 8 days late\n- O-1045 (Lakeview Rentals): 50 units short, 5 days late\n\nDrafted and saved (not sent) for review:\n1. Supplier reply to Karen Walsh - acknowledges the schedule, asks if any units can ship sooner than day 26 to reduce impact, asks for confirmation the day 26 date is firm, and commits to responding by end of week.\n2. Customer notices for all three at-risk orders (O-1043, O-1044, O-1045) informing them of the delay.\n\nAction needed: A person must decide whether to accept the split shipment as proposed or pursue expediting/other options with the supplier, particularly given the penalty exposure on O-1043. Karen Walsh is available this week to discuss alternatives - purchasing manager should consider reaching out directly in addition to the drafted reply.", "needs_person_decision": true}
+======================================================================
+
+======================================================================
+SUMMARY (orchestrator, 01-northgate-controller-delay.eml)
+======================================================================
+Tool calls by the orchestrator: 6 of 10
+Orchestrator's summary: Northgate Drive Systems (supplier) notified that PO-7781 for 400 MC-500 controllers will ship in two parts: 120 on the original day 5, and the remaining 280 delayed to day 26 (3 weeks late) due to a chip production problem at their end. This puts three customer orders at risk, totaling 90 units short in the interim:
+- O-1043 (City of Ashford Bike Share): 10 units short, 12 days late, carries a LATE PENALTY - needs person decision
+- O-1044 (Main Street Bikes): 30 units short, 8 days late
+- O-1045 (Lakeview Rentals): 50 units short, 5 days late
+
+Drafted and saved (not sent) for review:
+1. Supplier reply to Karen Walsh - acknowledges the schedule, asks if any units can ship sooner than day 26 to reduce impact, asks for confirmation the day 26 date is firm, and commits to responding by end of week.
+2. Customer notices for all three at-risk orders (O-1043, O-1044, O-1045) informing them of the delay.
+
+Action needed: A person must decide whether to accept the split shipment as proposed or pursue expediting/other options with the supplier, particularly given the penalty exposure on O-1043. Karen Walsh is available this week to discuss alternatives - purchasing manager should consider reaching out directly in addition to the drafted reply.
+Orchestrator says a person must decide: yes
+What changed: Of the 400 MC-500 controllers on PO-7781, only 120 will arrive on the originally scheduled day 5, with the remaining 280 delayed to day 26 (three weeks later).
+Supplier reply: drafted
+
+Drafts saved: 4  (in week-05\drafts\01-northgate-controller-delay-orchestrator-20261121-184830)
+  - supplier-reply.txt       to k.walsh@northgatedrive.example         reviewer APPROVE (0 revision(s)), ok
+  - customer-O-1043.txt      to fleet@ashfordbikeshare.example         reviewer APPROVE (0 revision(s)), NEEDS A PERSON
+  - customer-O-1044.txt      to owner@mainstreetbikes.example          reviewer APPROVE (0 revision(s)), ok
+  - customer-O-1045.txt      to info@lakeviewrentals.example           reviewer APPROVE (0 revision(s)), ok
+
+Drafts marked for a person: 1
+  - customer-O-1043.txt: order O-1043 has a late penalty
+
+Decisions for a person: 2
+  - Decide whether to accept the split shipment (120 on day 5, 280 on day 26) or pursue alternative options with Northgate Drive Systems, since this delay puts three orders at risk, including one (O-1043, City of Ashford Bike Share) with a late penalty.
+  - Consider whether to discuss expediting options with the supplier (Karen Walsh offered to discuss alternatives this week) to reduce the 12-day lateness on the penalty order O-1043.
+
+Tokens by specialist
+  specialist         calls     input    output
+  orchestrator           3     7,435       786
+  supply analyst         3     9,670       919
+  supplier writer        1     1,079       484
+  reviewer               4     3,254     1,460
+  customer writer        3     1,174       481
+  total                       22,612     4,130
+
+Total tokens: 22,612 input, 4,130 output (26,742 in all)
+Nothing was sent.

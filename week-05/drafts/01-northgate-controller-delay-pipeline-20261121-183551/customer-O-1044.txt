@@ -1,0 +1,20 @@
+To: owner@mainstreetbikes.example
+Subject: Your Brookfield order O-1044 - updated ship date
+Status: not sent
+Reviewer: APPROVE after 1 revision(s)
+Name check: none found
+Needs a person: no
+
+DRAFT
+Dear Main Street Bikes,
+
+We're writing to update you on order O-1044 for 30 Cargo E bicycles. The order is now expected to ship 8 days later than originally planned.
+
+We're sorry for this delay. It was caused by a production delay.
+
+We will keep you informed as the order progresses toward shipment. Thank you for your patience and for your business.
+
+Customer Service, Brookfield Bicycle Company
+
+REVIEWER'S LAST ANSWER
+APPROVE

@@ -1,0 +1,4 @@
+# Packages for week-05. Install into the repository's .venv:
+#   .venv\Scripts\python.exe -m pip install -r week-05\requirements.txt
+mcp            # supply_mcp_server.py (official MCP Python SDK; pydantic comes with it)
+anthropic      # the agents that will call Claude
