@@ -1,0 +1,22 @@
+To: d.kessler@danforthpump.example
+Subject: Re: PO-5512 - PU-20 pumps - partial shipment
+Status: not sent
+Reviewer: APPROVE after 0 revision(s)
+Name check: none found
+Needs a person: no
+
+DRAFT
+Hello Diane,
+
+Thank you for the update on PO-5512. We confirm our understanding: 40 of the 200 PU-20 pumps will arrive on the original schedule (day 4), with the remaining 160 units now delayed to day 19.
+
+This shortfall affects 55 units across our downstream orders, with delays ranging from 2 to 7 days depending on the order's original ship date. This is a meaningful disruption on our end, so we'd appreciate any way to reduce the gap — in particular, if you could ship a larger portion of the 160 units sooner than day 19, even in partial batches, that would help us minimize the delay.
+
+Regarding your request for customer order details: we're not able to share customer-specific information, including names or individual quantities. We can tell you that 55 units across three orders are affected if that's useful for your planning.
+
+Please let us know as soon as possible if any earlier partial shipment is possible.
+
+Purchasing, Copperline Coffee Machines
+
+REVIEWER'S LAST ANSWER
+APPROVE

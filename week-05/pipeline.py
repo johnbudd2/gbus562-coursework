@@ -1,4 +1,4 @@
-"""Coordinator 1: a fixed pipeline for Brookfield's response to one supplier email.
+"""Coordinator 1: a fixed pipeline for a company's response to one supplier email.
 
 It always runs the specialists from specialists.py in the same order:
 
@@ -7,7 +7,8 @@ It always runs the specialists from specialists.py in the same order:
 3. A reply to the supplier.
 
 Every draft goes through the review step (writer, reviewer, at most 2
-revisions, a name check in code) and is saved in week-05/drafts/<run folder>/.
+revisions, a name check in code) and is saved in
+week-05/drafts/<company folder>/<run folder>/.
 Nothing is ever sent. At the end it prints a summary: drafts saved, drafts
 marked for a person, decisions for a person, and total tokens.
 
@@ -15,6 +16,9 @@ Usage (from the top of the repository):
     .venv\\Scripts\\python.exe week-05\\pipeline.py --email week-05\\brookfield-bikes\\supplier-emails\\01-northgate-controller-delay.eml
     .venv\\Scripts\\python.exe week-05\\pipeline.py --email <file.eml> --save week-05\\runs\\pipeline-01.txt
 
+    .venv\\Scripts\\python.exe week-05\\pipeline.py --org copperline-coffee --email week-05\\copperline-coffee\\supplier-emails\\01-danforth-pump-delay.eml
+
+--org names the company folder (default: brookfield-bikes; see org.py).
 --save also writes everything printed to that text file (UTF-8).
 """
 
@@ -59,6 +63,7 @@ async def run(email_path):
     print(f"From:        {email.sender}")
     print(f"Subject:     {email.subject}")
     print(f"Model:       {sp.MODEL}")
+    sp.print_org()
 
     drafts = []          # DraftResult for each saved draft
     failures = []        # (what, error) for drafts that could not be made
@@ -148,19 +153,20 @@ def print_summary(coordinator, email, brief, drafts, failures, supplier_status,
 
 
 def display(path):
-    return path.relative_to(sp.REPO) if path.is_relative_to(sp.REPO) else path
+    return sp.display_path(path)
 
 
 def main():
-    run_cli(run, "Prepare Brookfield's response to one supplier email with a fixed "
+    run_cli(run, "Prepare a company's response to one supplier email with a fixed "
                  "pipeline of specialists. Saves drafts only; never sends.")
 
 
 def run_cli(run_fn, description):
-    """--email and --save handling shared by pipeline.py and orchestrator.py."""
+    """--org, --email and --save handling shared by pipeline.py and orchestrator.py."""
     for stream in (sys.stdout, sys.stderr):
         stream.reconfigure(encoding="utf-8")
     parser = argparse.ArgumentParser(description=description)
+    sp.add_org_argument(parser)
     parser.add_argument("--email", required=True, type=Path,
                         help="path of one supplier email file (.eml)")
     parser.add_argument("--save", metavar="FILE", type=Path,
@@ -168,6 +174,11 @@ def run_cli(run_fn, description):
     args = parser.parse_args()
     if not args.email.is_file():
         parser.error(f"email file not found: {args.email}")
+    try:
+        sp.set_org(args.org)
+    except sp.SpecialistError as e:
+        parser.error(str(e))
+    warn_if_other_company(args.email)
 
     def go():
         try:
@@ -189,6 +200,15 @@ def run_cli(run_fn, description):
             sys.stdout = terminal
     print(f"Output saved to {args.save}")
     sys.exit(code)
+
+
+def warn_if_other_company(email_path):
+    """Warn when the email sits in another company's supplier-emails folder."""
+    folder = email_path.resolve().parent
+    if folder.name == "supplier-emails" and folder.parent != sp.DATA_DIR:
+        print(f"Warning: {email_path} is in the {folder.parent.name} folder, but the "
+              f"company is {sp.DATA_DIR.name}. Add --org {folder.parent.name} to use "
+              "that company's data.", file=sys.stderr)
 
 
 if __name__ == "__main__":

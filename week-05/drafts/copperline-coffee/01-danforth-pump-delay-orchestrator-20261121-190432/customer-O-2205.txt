@@ -1,0 +1,24 @@
+To: hello@tallpinescoffee.example
+Subject: Your Copperline order O-2205 - updated ship date
+Status: not sent
+Reviewer: APPROVE after 0 revision(s)
+Name check: none found
+Needs a person: yes - order O-2205 has a late penalty
+
+DRAFT
+Dear Tall Pines Coffee House,
+
+We are writing about your order O-2205 for 25 units of the Cafe One.
+
+Your order is now expected to ship 2 days later than originally planned. We apologize for this delay.
+
+The cause is a delay in a part from one of our suppliers.
+
+We will keep you updated on the progress of your order and notify you once it has shipped.
+
+Thank you for your patience and for being a valued customer.
+
+Customer Service, Copperline Coffee Machines
+
+REVIEWER'S LAST ANSWER
+APPROVE

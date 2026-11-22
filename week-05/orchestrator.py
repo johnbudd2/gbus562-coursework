@@ -1,7 +1,8 @@
-"""Coordinator 2: an orchestrator agent for Brookfield's response to one supplier email.
+"""Coordinator 2: an orchestrator agent for a company's response to one supplier email.
 
 Here Claude decides which specialists to use. An agent (claude-sonnet-5) gets
-the system prompt in brookfield-bikes/prompts/orchestrator.txt and four tools:
+the system prompt in <company folder>/prompts/orchestrator.txt (the company
+folder is brookfield-bikes unless --org names another) and four tools:
 
 - run_supply_analyst: runs the supply analyst on the email; returns its brief.
 - draft_supplier_reply: drafts a reply to the supplier from the latest brief.
@@ -10,7 +11,8 @@ the system prompt in brookfield-bikes/prompts/orchestrator.txt and four tools:
 
 The three specialist tools run the same code as pipeline.py (specialists.py),
 and every draft goes through the same review step (writer, reviewer, at most 2
-revisions, name and penalty checks in code) and is saved in week-05/drafts.
+revisions, name and penalty checks in code) and is saved in
+week-05/drafts/<company folder>.
 The orchestrator never sees a writer's input: the code hands each writer the
 analyst's brief or one order's facts, so the agent can't pass on invented
 numbers. Nothing is ever sent.
@@ -22,6 +24,7 @@ summary as the pipeline, plus the agent's own summary and decision flag.
 Usage (from the top of the repository):
     .venv\\Scripts\\python.exe week-05\\orchestrator.py --email week-05\\brookfield-bikes\\supplier-emails\\02-kendall-tire-options.eml
     .venv\\Scripts\\python.exe week-05\\orchestrator.py --email <file.eml> --save week-05\\runs\\orchestrator-02.txt
+    .venv\\Scripts\\python.exe week-05\\orchestrator.py --org copperline-coffee --email week-05\\copperline-coffee\\supplier-emails\\01-danforth-pump-delay.eml
 """
 
 import json
@@ -44,9 +47,11 @@ def tool(name, description, properties=None, required=()):
     }
 
 
-TOOLS = [
+def build_tools(short):
+    """The orchestrator's four tools, worded for one company (e.g. 'Copperline')."""
+    return [
     tool("run_supply_analyst",
-         "Run the supply analyst on the supplier email. It uses Brookfield's stock, "
+         f"Run the supply analyst on the supplier email. It uses {short}'s stock, "
          "shipment, and order data to work out which customer orders the email "
          "puts at risk, and returns its brief as JSON: what changed, orders at risk "
          "(with units short, ship day, and the day each can ship), the supplier's "
@@ -64,12 +69,13 @@ TOOLS = [
          "for a person; it is never sent. The order must be in the orders_at_risk "
          "list of the analyst's latest brief. Call once per order.",
          {"order_id": {"type": "string",
-                       "description": "The order number, for example O-1043."}},
+                       "description": "The order number, as in the brief's "
+                                      "orders_at_risk."}},
          ["order_id"]),
     tool("finish",
          "End the job. Call this exactly once, last.",
          {"summary": {"type": "string",
-                      "description": "A short summary for Brookfield's purchasing "
+                      "description": f"A short summary for {short}'s purchasing "
                                      "manager: what the email means, what was "
                                      "drafted, and what still needs doing."},
           "needs_person_decision": {"type": "boolean",
@@ -77,7 +83,7 @@ TOOLS = [
                                                    "decision, such as choosing a "
                                                    "supplier's option."}},
          ["summary", "needs_person_decision"]),
-]
+    ]
 
 
 class Job:
@@ -161,20 +167,22 @@ async def run(email_path):
     print(f"Email file:  {email.path.name}")
     print(f"From:        {email.sender}")
     print(f"Subject:     {email.subject}")
+    tools = build_tools(sp.SHORT)
     print(f"Model:       {sp.MODEL}")
-    print(f"Tools:       {', '.join(t['name'] for t in TOOLS)}")
+    print(f"Tools:       {', '.join(t['name'] for t in tools)}")
+    sp.print_org()
 
     system = sp.load_prompt("orchestrator")
     messages = [{"role": "user", "content": (
         f"Today's date: {datetime.now():%Y-%m-%d}\n\n"
-        "Coordinate Brookfield's response to this supplier email.\n\n"
+        f"Coordinate {sp.SHORT}'s response to this supplier email.\n\n"
         f"<email>\n{email.as_text()}\n</email>")}]
     tool_calls = 0
     stopped = None
 
     while job.finish is None and stopped is None:
         try:
-            response = await sp.call_model(COORDINATOR, system, messages, TOOLS)
+            response = await sp.call_model(COORDINATOR, system, messages, tools)
         except sp.SpecialistError as e:
             stopped = f"The orchestrator could not continue: {e}"
             break
@@ -224,7 +232,7 @@ async def run(email_path):
 
 
 def main():
-    run_cli(run, "Prepare Brookfield's response to one supplier email with an "
+    run_cli(run, "Prepare a company's response to one supplier email with an "
                  "orchestrator agent that chooses the specialists. Saves drafts "
                  "only; never sends.")
 

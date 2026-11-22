@@ -1,20 +1,23 @@
-"""MCP server for Brookfield Bicycle Company's supply data.
+"""MCP server for one company's supply data (Brookfield Bicycle Company by default).
 
-It reads the CSV files in week-05/brookfield-bikes (the default) or any folder
-laid out the same way:
+It reads the CSV files in a company folder: week-05/brookfield-bikes (the
+default) or the folder given with --org, such as copperline-coffee. Each
+company names its columns its own way, so org.py works out from each header
+row which column holds the product, the quantity, the parts per unit, the ship
+day, and so on (see org.py):
 
-    parts.csv              part_id, description, on_hand, supplier
-    inbound.csv            po_number, part_id, supplier, qty, arrives_in_days
-    orders.csv             order_id, customer, contact_email, model, qty, ship_in_days, late_penalty
-    bill-of-materials.csv  model, part_id, qty_per_bike
+    parts.csv              part number, description, stock on hand, supplier
+    inbound.csv            purchase order, part number, supplier, quantity, arrival day
+    orders.csv             order number, customer, product, quantity, ship day, late penalty
+    bill-of-materials.csv  product, part number, parts per unit
     suppliers.csv          (not used by these tools)
 
 It offers three read-only tools:
 
-- get_part(part_id): stock on hand, scheduled shipments, and the models that
+- get_part(part_id): stock on hand, scheduled shipments, and the products that
   use the part.
 - get_orders_for_part(part_id): the open orders that need the part, with units
-  needed (bikes x parts per bike), ship day, and late penalty.
+  needed (units ordered x parts per unit), ship day, and late penalty.
 - check_coverage(part_id, arrivals): replaces the part's scheduled shipments
   with a new list of arrivals and works out, for each order, whether it is
   covered, or how many units it is short and the first day it can ship.
@@ -30,7 +33,10 @@ arrivals so far covers the units of orders 1..k together.
 
 Usage (from the top of the repository):
     .venv\\Scripts\\python.exe week-05\\supply_mcp_server.py                       # stdio
-    .venv\\Scripts\\python.exe week-05\\supply_mcp_server.py --data path\\to\\folder
+    .venv\\Scripts\\python.exe week-05\\supply_mcp_server.py --org copperline-coffee
+    .venv\\Scripts\\python.exe week-05\\supply_mcp_server.py --org path\\to\\folder
+
+--data is an older name for --org and still works.
 
 Normally an AI app starts this server for you (see `claude mcp add` in the
 week-05 notes). The server talks to the app over stdin/stdout, so nothing in
@@ -38,7 +44,6 @@ this file may print to stdout: all messages go to stderr. It reads no API key.
 """
 
 import argparse
-import csv
 import json
 import logging
 import sys
@@ -47,46 +52,32 @@ from typing import Annotated
 
 from pydantic import BaseModel, Field
 
+import org
+from org import DataError
+
 HERE = Path(__file__).resolve().parent
-DEFAULT_DATA = "brookfield-bikes"
+DEFAULT_DATA = org.DEFAULT_ORG
 
 # Set by set_data_dir().
 DATA_DIR = HERE / DEFAULT_DATA
 
-REQUIRED_COLUMNS = {
-    "parts.csv": {"part_id", "description", "on_hand", "supplier"},
-    "inbound.csv": {"po_number", "part_id", "supplier", "qty", "arrives_in_days"},
-    "orders.csv": {"order_id", "customer", "model", "qty", "ship_in_days", "late_penalty"},
-    "bill-of-materials.csv": {"model", "part_id", "qty_per_bike"},
-}
+TOOL_FILES = ("parts.csv", "inbound.csv", "orders.csv", "bill-of-materials.csv")
 
 log = logging.getLogger("supply_mcp_server")
-
-
-class DataError(Exception):
-    """A CSV file is missing or malformed."""
 
 
 # ---------------------------------------------------------------------------
 # Reading the CSV files (re-read on every call, so edits show up at once)
 # ---------------------------------------------------------------------------
 
-def resolve_data_dir(data):
-    """Turn --data (a folder name inside week-05, or a path) into a folder path."""
-    path = Path(data or DEFAULT_DATA)
-    if not path.is_dir() and (HERE / path).is_dir():
-        path = HERE / path
-    return path.resolve()
-
-
 def set_data_dir(data):
-    """Point the server at one data folder. Returns an error message or None."""
+    """Point the server at one company folder. Returns an error message or None."""
     global DATA_DIR
-    DATA_DIR = resolve_data_dir(data)
+    DATA_DIR = org.resolve_org_dir(data)
     if not DATA_DIR.is_dir():
-        return f"data folder not found: {data}"
+        return f"company folder not found: {data}"
     try:
-        for name in REQUIRED_COLUMNS:
+        for name in TOOL_FILES:
             read_csv(name)
     except DataError as e:
         return str(e)
@@ -94,17 +85,8 @@ def set_data_dir(data):
 
 
 def read_csv(name):
-    path = DATA_DIR / name
-    if not path.is_file():
-        raise DataError(f"{path} not found")
-    with path.open(newline="", encoding="utf-8-sig") as f:
-        reader = csv.DictReader(f)
-        header = {h.strip() for h in (reader.fieldnames or [])}
-        missing = REQUIRED_COLUMNS[name] - header
-        if missing:
-            raise DataError(f"{name} is missing column(s): {', '.join(sorted(missing))}")
-        return [{k.strip(): (v or "").strip() for k, v in row.items() if k}
-                for row in reader if any((v or "").strip() for v in row.values())]
+    """Rows of one CSV file, keyed by role (product, quantity, ship_day, ...)."""
+    return org.read_table(DATA_DIR, name)
 
 
 def to_int(value, name, column):
@@ -135,38 +117,38 @@ def scheduled_shipments(part_id):
     shipments = [{
         "po_number": r["po_number"],
         "supplier": r["supplier"],
-        "qty": to_int(r["qty"], "inbound.csv", "qty"),
-        "arrives_in_days": to_int(r["arrives_in_days"], "inbound.csv", "arrives_in_days"),
+        "qty": to_int(r["quantity"], "inbound.csv", "quantity"),
+        "arrives_in_days": to_int(r["arrival_day"], "inbound.csv", "arrival day"),
     } for r in rows]
     return sorted(shipments, key=lambda s: (s["arrives_in_days"], s["po_number"]))
 
 
-def parts_per_bike(part_id):
-    """Return {model: qty_per_bike} for the models that use part_id."""
+def parts_per_unit(part_id):
+    """Return {product: parts per unit} for the products that use part_id."""
     usage = {}
     for r in read_csv("bill-of-materials.csv"):
         if norm(r["part_id"]) == norm(part_id):
-            usage[r["model"]] = usage.get(r["model"], 0) + to_int(
-                r["qty_per_bike"], "bill-of-materials.csv", "qty_per_bike")
+            usage[r["product"]] = usage.get(r["product"], 0) + to_int(
+                r["per_unit"], "bill-of-materials.csv", "parts per unit")
     return usage
 
 
 def orders_for_part(part_id):
     """Open orders that need part_id, in fill order (ship day, then order_id)."""
-    usage = parts_per_bike(part_id)
+    usage = parts_per_unit(part_id)
     orders = []
     for r in read_csv("orders.csv"):
-        if r["model"] not in usage:
+        if r["product"] not in usage:
             continue
-        bikes = to_int(r["qty"], "orders.csv", "qty")
+        ordered = to_int(r["quantity"], "orders.csv", "quantity")
         orders.append({
             "order_id": r["order_id"],
             "customer": r["customer"],
-            "model": r["model"],
-            "bikes": bikes,
-            "parts_per_bike": usage[r["model"]],
-            "units_needed": bikes * usage[r["model"]],
-            "ship_day": to_int(r["ship_in_days"], "orders.csv", "ship_in_days"),
+            "product": r["product"],
+            "units_ordered": ordered,
+            "parts_per_unit": usage[r["product"]],
+            "units_needed": ordered * usage[r["product"]],
+            "ship_day": to_int(r["ship_day"], "orders.csv", "ship day"),
             "late_penalty": r["late_penalty"].lower() in ("yes", "y", "true", "1"),
         })
     return sorted(orders, key=lambda o: (o["ship_day"], o["order_id"]))
@@ -239,7 +221,8 @@ def guarded(fn):
 # Tools
 # ---------------------------------------------------------------------------
 
-PartId = Annotated[str, Field(description="The part number, for example MC-500.")]
+PartId = Annotated[str, Field(description="The part number, as written in the "
+                                          "supplier's email or in parts.csv.")]
 
 
 class Arrival(BaseModel):
@@ -249,12 +232,12 @@ class Arrival(BaseModel):
 
 @guarded
 def get_part(part_id: PartId) -> str:
-    """Look up one part: stock on hand, scheduled shipments, and the models that use it.
+    """Look up one part: stock on hand, scheduled shipments, and the products that use it.
 
     Returns JSON with the part's description, supplier, on_hand (units in stock
     today), scheduled_shipments (purchase order, quantity, and arrives_in_days,
-    counted from today), and used_in (each bike model and how many of the part
-    one bike needs).
+    counted from today), and used_in (each product and how many of the part
+    one unit of it needs).
     """
     row = find_part(part_id)
     pid = row["part_id"]
@@ -264,8 +247,8 @@ def get_part(part_id: PartId) -> str:
         "supplier": row["supplier"],
         "on_hand": to_int(row["on_hand"], "parts.csv", "on_hand"),
         "scheduled_shipments": scheduled_shipments(pid),
-        "used_in": [{"model": m, "parts_per_bike": n}
-                    for m, n in parts_per_bike(pid).items()],
+        "used_in": [{"product": p, "parts_per_unit": n}
+                    for p, n in parts_per_unit(pid).items()],
     })
 
 
@@ -273,8 +256,9 @@ def get_part(part_id: PartId) -> str:
 def get_orders_for_part(part_id: PartId) -> str:
     """List the open customer orders that need a part, earliest ship day first.
 
-    Returns JSON with, for each order: order_id, customer, model, bikes,
-    parts_per_bike, units_needed (bikes times parts per bike), ship_day
+    Returns JSON with, for each order: order_id, customer, product,
+    units_ordered, parts_per_unit, units_needed (units ordered times parts per
+    unit), ship_day
     (counted from today), and late_penalty (true if the order carries a
     penalty for shipping late).
     """
@@ -330,8 +314,8 @@ def create_server():
 
     read_only = ToolAnnotations(readOnlyHint=True, openWorldHint=False)
     server = MCPServer(
-        "brookfield-supply",
-        instructions="Supply tools for Brookfield Bicycle Company: look up a part's "
+        f"{org.short_name(DATA_DIR).lower()}-supply",
+        instructions=f"Supply tools for {org.company_name(DATA_DIR)}: look up a part's "
                      "stock and scheduled shipments, the customer orders that need "
                      "it, and which orders a new arrival schedule covers. All days "
                      "are counted from today.")
@@ -346,16 +330,19 @@ def main():
                         format="%(name)s: %(message)s")
     log.setLevel(logging.INFO)
     parser = argparse.ArgumentParser(
-        description="MCP server with Brookfield supply tools (parts, orders, coverage).")
-    parser.add_argument("--data", metavar="FOLDER", default=DEFAULT_DATA,
-                        help="folder with the CSV files: a name inside week-05 or a "
-                             f"path (default: {DEFAULT_DATA})")
+        description="MCP server with one company's supply tools (parts, orders, coverage).")
+    parser.add_argument("--org", "--data", dest="org", metavar="FOLDER",
+                        default=DEFAULT_DATA,
+                        help="company folder with the CSV files: a name inside week-05 "
+                             f"or a path (default: {DEFAULT_DATA})")
     args = parser.parse_args()
 
-    problem = set_data_dir(args.data)
+    problem = set_data_dir(args.org)
     if problem:
         parser.error(problem)
-    log.info("Data folder: %s", DATA_DIR)
+    log.info("Company folder: %s (%s)", DATA_DIR, org.company_name(DATA_DIR))
+    for line in org.describe_columns(DATA_DIR):
+        log.info("Columns  %s", line)
     create_server().run()  # stdio
 
 

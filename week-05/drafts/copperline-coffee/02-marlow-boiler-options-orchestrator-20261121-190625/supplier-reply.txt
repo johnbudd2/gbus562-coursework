@@ -1,0 +1,26 @@
+To: v.lindqvist@marlowmetal.example
+Subject: Re: PO-5520 - BL-12 boilers - please choose a shipping option
+Status: not sent
+Reviewer: APPROVE after 0 revision(s)
+Name check: none found
+Needs a person: no
+
+DRAFT
+Hi Victor,
+
+Thank you for the update on PO-5520. We understand that your welding cell capacity is limiting this month's shipment, and that you've offered two options:
+
+- Option A: 80 units on day 7, with the remaining 120 units on day 21.
+- Option B (default): all 200 units together on day 13.
+
+For our planning, Option A would leave one of our orders 5 units short and 4 days delayed, while Option B would leave another order 40 units short and 1 day delayed.
+
+Before we finalize, is there any way to ship more units sooner under either option — for example, a partial shipment ahead of day 13, or a larger first batch under Option A? Reducing the shortfall or the delay on either path would help us a great deal.
+
+We will confirm our choice within your three-business-day window as requested.
+
+Regards,
+Purchasing, Copperline Coffee Machines
+
+REVIEWER'S LAST ANSWER
+APPROVE

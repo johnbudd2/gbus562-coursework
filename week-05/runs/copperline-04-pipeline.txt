@@ -1,0 +1,81 @@
+Coordinator: pipeline (fixed order)
+Email file:  04-pelham-maintenance-closure.eml
+From:        o.brady@pelhamfittings.example
+Subject:     Plant maintenance closure - PO-5540 not affected
+Model:       claude-sonnet-5
+Company:     Copperline Coffee Machines
+Folder:      week-05\copperline-coffee
+Columns found in the header rows:
+  parts.csv: part number=part_id, stock on hand=on_hand, supplier=supplier, description=description
+  inbound.csv: purchase order=po_number, part number=part_id, arrival day=arrives_in_days, quantity=qty, supplier=supplier
+  orders.csv: contact email=contact_email, order number=order_id, late penalty=late_penalty, ship day=ship_by_day, quantity=units, product=product, customer=customer
+  bill-of-materials.csv: part number=part_id, parts per unit=per_unit, product=product
+  suppliers.csv: contact email=contact_email, supplier=supplier, contact name=contact_name
+
+======================================================================
+Step 1: supply analyst
+======================================================================
+
+>> HANDOFF  pipeline -> supply analyst: supplier email 04-pelham-maintenance-closure.eml
+   Plant maintenance closure - PO-5540 not affected | Hello, A quick note for your planning: our plant will close for one week of annual maintenance, starting four weeks from today. Your open order, PO-5540 for 60 SW-3 steam wands, ships before the closure and will arrive on the scheduled date. No acti...
+   [supply analyst] tools: check_coverage, get_orders_for_part, get_part
+   [supply analyst] tokens: 2,067 in, 226 out
+   [supply analyst] tool 1: get_part {"part_id": "SW-3"}
+      result: { "part_id": "SW-3", "description": "Steam wand", "supplier": "Pelham Fittings", "on_hand": 40, "scheduled_shipments": [ { "po_number": "PO-5540", "supplier": "...
+   [supply analyst] tool 2: get_orders_for_part {"part_id": "SW-3"}
+      result: { "part_id": "SW-3", "total_units_needed": 37, "orders": [ { "order_id": "O-2202", "customer": "Harbor Hotel Group", "product": "Cafe Duo", "units_ordered": 15,...
+   [supply analyst] tokens: 2,897 in, 156 out
+   [supply analyst] tool 3: check_coverage {"part_id": "SW-3", "arrivals": [{"day": 11, "qty": 60}]}
+      result: { "part_id": "SW-3", "on_hand": 40, "arrivals_used": [ { "qty": 60, "day": 11 } ], "orders_short": 0, "units_short_total": 0, "orders": [ { "order_id": "O-2202"...
+   [supply analyst] tokens: 3,392 in, 133 out
+   [supply analyst] tool calls: 3
+
+>> HANDOFF  supply analyst -> pipeline: brief (0 order(s) at risk, 0 option(s), 0 decision(s) for a person)
+
+ANALYST'S BRIEF
+{
+  "part_id": "SW-3",
+  "what_changed": "No schedule change: PO-5540 (60 units) still arrives in 11 days as originally planned, despite a one-week plant maintenance closure starting in 28 days.",
+  "orders_at_risk": [],
+  "options": [],
+  "decisions_for_a_person": [],
+  "supplier_questions": []
+}
+
+======================================================================
+Step 2: customer notices (0 order(s) at risk)
+======================================================================
+No orders at risk; skipping customer notices.
+
+======================================================================
+Step 3: reply to the supplier
+======================================================================
+
+>> HANDOFF  pipeline -> supplier writer: supplier email + brief (customer names removed)
+   {"part_id": "SW-3", "what_changed": "No schedule change: PO-5540 (60 units) still arrives in 11 days as originally planned, despite a one-week plant maintenance closure starting in 28 days.", "orders_at_risk": [], "options": [], "decisions_for_a_person": [], "supplier_questions": []}
+   [supplier writer] tokens: 655 in, 113 out
+
+>> HANDOFF  supplier writer -> pipeline: NO REPLY NEEDED
+
+The supplier writer says: NO REPLY NEEDED
+
+======================================================================
+SUMMARY (pipeline, 04-pelham-maintenance-closure.eml)
+======================================================================
+What changed: No schedule change: PO-5540 (60 units) still arrives in 11 days as originally planned, despite a one-week plant maintenance closure starting in 28 days.
+Supplier reply: writer said NO REPLY NEEDED; nothing saved
+
+Drafts saved: 0
+
+Drafts marked for a person: 0
+
+Decisions for a person: 0
+
+Tokens by specialist
+  specialist         calls     input    output
+  supply analyst         3     8,356       515
+  supplier writer        1       655       113
+  total                        9,011       628
+
+Total tokens: 9,011 input, 628 output (9,639 in all)
+Nothing was sent.

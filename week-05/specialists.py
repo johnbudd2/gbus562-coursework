@@ -1,7 +1,14 @@
-"""The four Brookfield specialists, shared by both coordinators.
+"""The four specialists, shared by both coordinators, for any company folder.
 
-Each specialist reads its system prompt from week-05/brookfield-bikes/prompts
-on every run, so you can edit a prompt between runs without touching code.
+The company folder is week-05/brookfield-bikes unless set_org() (the --org
+option of pipeline.py and orchestrator.py) names another, such as
+copperline-coffee. The data comes from its CSV files (columns worked out from
+each header row by org.py), and each specialist reads its system prompt from
+its prompts folder on every run, so you can edit a prompt between runs without
+touching code. Drafts are saved in week-05/drafts/<company folder>/<run>/.
+
+Run this file on its own to check a company folder without calling the API:
+    .venv\\Scripts\\python.exe week-05\\specialists.py --org copperline-coffee
 
 - run_analyst(email): an agent. It uses the tools of supply_mcp_server.py
   (get_part, get_orders_for_part, check_coverage), stops after 10 tool calls,
@@ -21,13 +28,16 @@ marked for a person if the reviewer never approved it, the name check failed,
 or its order has a late penalty. Nothing is ever sent.
 
 Every handoff between the coordinator and a specialist is printed, as are the
-tokens each specialist used (see print_token_report).
+tokens each specialist used (see print_token_report). The analyst's brief is
+printed in full, and after each review step the final draft is printed once,
+between a FINAL DRAFT TO SUPPLIER (or FINAL DRAFT TO CUSTOMER <order>) line and
+a "Marked for a person: yes/no" line.
 
 The API key is read at runtime from API-Key.txt (or course_API.txt) in the
 folder above the repository. It is never printed or written to a file.
 """
 
-import csv
+import argparse
 import json
 import re
 import sys
@@ -42,12 +52,19 @@ import anthropic
 from mcp import ClientSession
 from mcp.client.stdio import StdioServerParameters, stdio_client
 
+import org
+
 HERE = Path(__file__).resolve().parent
 REPO = HERE.parent
-DATA_DIR = HERE / "brookfield-bikes"
-PROMPTS_DIR = DATA_DIR / "prompts"
-DRAFTS_DIR = HERE / "drafts"
+DRAFTS_ROOT = HERE / "drafts"
 SERVER = HERE / "supply_mcp_server.py"
+
+# The company folder and what follows from it. Set by set_org().
+DATA_DIR = HERE / org.DEFAULT_ORG
+PROMPTS_DIR = DATA_DIR / "prompts"
+DRAFTS_DIR = DRAFTS_ROOT / DATA_DIR.name
+COMPANY = org.company_name(DATA_DIR)       # e.g. Brookfield Bicycle Company
+SHORT = org.short_name(DATA_DIR)           # e.g. Brookfield
 KEY_FILES = [REPO.parent / "API-Key.txt", REPO.parent / "course_API.txt"]
 
 MODEL = "claude-sonnet-5"
@@ -147,15 +164,49 @@ def get_client():
     return _client
 
 
+def set_org(name=None):
+    """Point the specialists at one company folder (a name inside week-05, or a
+    path; None means brookfield-bikes). Raises SpecialistError if the folder is
+    missing a file, a prompt, or a column that can't be worked out."""
+    global DATA_DIR, PROMPTS_DIR, DRAFTS_DIR, COMPANY, SHORT
+    path = org.resolve_org_dir(name)
+    found = org.problems(path)
+    if found:
+        raise SpecialistError(f"Company folder {name or org.DEFAULT_ORG}: "
+                              + "; ".join(found))
+    DATA_DIR = path
+    PROMPTS_DIR = path / "prompts"
+    DRAFTS_DIR = DRAFTS_ROOT / path.name
+    COMPANY = org.company_name(path)
+    SHORT = org.short_name(path)
+    return path
+
+
+def print_org():
+    """Print the company, its folder, and the column chosen for each role."""
+    print(f"Company:     {COMPANY}")
+    print(f"Folder:      {display_path(DATA_DIR)}")
+    print("Columns found in the header rows:")
+    for line in org.describe_columns(DATA_DIR):
+        print(f"  {line}")
+
+
+def display_path(path):
+    path = Path(path)
+    return path.relative_to(REPO) if path.is_relative_to(REPO) else path
+
+
 def load_prompt(name):
     """Read a system prompt fresh on every run, e.g. load_prompt('analyst')."""
     return (PROMPTS_DIR / f"{name}.txt").read_text(encoding="utf-8")
 
 
 def read_csv(name):
-    with (DATA_DIR / name).open(newline="", encoding="utf-8-sig") as f:
-        return [{k.strip(): (v or "").strip() for k, v in row.items() if k}
-                for row in csv.DictReader(f)]
+    """Rows of one of the company's CSV files, keyed by role (see org.py)."""
+    try:
+        return org.read_table(DATA_DIR, name)
+    except org.DataError as e:
+        raise SpecialistError(str(e)) from None
 
 
 @dataclass
@@ -188,10 +239,14 @@ def load_email(path):
 # Names: removing customer names, and checking drafts for names
 # ---------------------------------------------------------------------------
 
-CORPORATE_WORDS = {"co", "co.", "inc", "inc.", "llc", "company", "corp", "corp.",
-                   "supply", "systems", "&"}
-# First words too common to count as a name on their own.
-GENERIC_WORDS = {"city", "main", "blue", "pine", "the", "bike", "bikes", "street"}
+CORPORATE_WORDS = {"co", "co.", "inc", "inc.", "llc", "ltd", "ltd.", "company", "corp",
+                   "corp.", "group", "supply", "systems", "works", "&"}
+# First words too common to count as a name on their own (a draft that says
+# "Good morning" must not count as naming Morning Ritual Cafe).
+GENERIC_WORDS = {"city", "main", "blue", "pine", "the", "bike", "bikes", "street",
+                 "morning", "union", "bright", "tall", "harbor", "north", "south",
+                 "east", "west", "good", "great", "new", "old", "first", "grand",
+                 "best", "central", "golden", "green", "red", "united", "royal"}
 
 
 def name_variants(name, contact_name="", contact_email=""):
@@ -224,7 +279,7 @@ def customer_names():
     out = {}
     for r in read_csv("orders.csv"):
         out.setdefault(r["customer"], set()).update(
-            name_variants(r["customer"], contact_email=r.get("contact_email", "")))
+            name_variants(r["customer"], contact_email=r["contact_email"]))
     return out
 
 
@@ -233,7 +288,7 @@ def supplier_names():
     out = {}
     for r in read_csv("suppliers.csv"):
         out.setdefault(r["supplier"], set()).update(name_variants(
-            r["supplier"], r.get("contact_name", ""), r.get("contact_email", "")))
+            r["supplier"], r["contact_name"], r["contact_email"]))
     for r in read_csv("parts.csv"):
         out.setdefault(r["supplier"], set()).update(name_variants(r["supplier"]))
     return out
@@ -371,9 +426,26 @@ async def run_analyst(email, sender="coordinator"):
             f"{email.subject} | {email.body}")
     system = load_prompt("analyst")
     server = StdioServerParameters(
-        command=sys.executable, args=[str(SERVER), "--data", str(DATA_DIR)],
+        command=sys.executable, args=[str(SERVER), "--org", str(DATA_DIR)],
         cwd=str(REPO))
 
+    try:
+        brief, tool_calls = await analyst_session(email, system, server)
+    except BaseExceptionGroup as group:
+        raise first_error(group) from None
+
+    print(f"   [{ANALYST}] tool calls: {tool_calls}")
+    handoff(ANALYST, sender,
+            f"brief ({len(brief['orders_at_risk'])} order(s) at risk, "
+            f"{len(brief['options'])} option(s), "
+            f"{len(brief['decisions_for_a_person'])} decision(s) for a person)")
+    print("\nANALYST'S BRIEF")
+    print(json.dumps(brief, indent=2, ensure_ascii=False))
+    return brief
+
+
+async def analyst_session(email, system, server):
+    """The analyst's tool loop over one MCP server session. Returns (brief, tool calls)."""
     async with stdio_client(server) as (read, write):
         async with ClientSession(read, write) as session:
             await session.initialize()
@@ -385,11 +457,12 @@ async def run_analyst(email, sender="coordinator"):
 
             messages = [{"role": "user", "content": (
                 f"Today's date: {datetime.now():%Y-%m-%d}\n\n"
-                "Work out how this supplier email affects Brookfield's customer "
+                f"Work out how this supplier email affects {SHORT}'s customer "
                 "orders, then give your brief as JSON.\n\n"
                 f"<email>\n{email.as_text()}\n</email>")}]
             tool_calls = 0
             out_of_calls = False
+            asked_again = False
 
             while True:
                 response = await call_model(
@@ -403,14 +476,16 @@ async def run_analyst(email, sender="coordinator"):
                         brief = parse_brief(text)
                         break
                     except SpecialistError as e:
-                        if out_of_calls or "JSON" not in str(e):
+                        if asked_again:
                             raise
-                        # One chance to restate the answer as the JSON brief.
-                        print(f"   [{ANALYST}] no JSON brief yet; asking for it")
-                        out_of_calls = True
-                        messages.append({"role": "user", "content":
-                                         "Give your brief now as JSON only, with "
-                                         "exactly the fields your instructions list."})
+                        # One chance to restate the answer as a usable brief.
+                        print(f"   [{ANALYST}] brief not usable ({e}); asking again")
+                        asked_again = out_of_calls = True
+                        messages.append({"role": "user", "content": (
+                            f"Your brief can't be used: {e} Give your brief again as "
+                            "JSON only, with exactly the fields your instructions "
+                            "list. orders_at_risk, options, decisions_for_a_person, "
+                            "and supplier_questions must each be a JSON list.")})
                         continue
 
                 results = []
@@ -439,13 +514,19 @@ async def run_analyst(email, sender="coordinator"):
                           "no more tools")
                 messages.append({"role": "user", "content": results})
 
-    print(f"   [{ANALYST}] tool calls: {tool_calls}")
-    handoff(ANALYST, sender,
-            f"brief ({len(brief['orders_at_risk'])} order(s) at risk, "
-            f"{len(brief['options'])} option(s), "
-            f"{len(brief['decisions_for_a_person'])} decision(s) for a person)",
-            json.dumps(brief, ensure_ascii=False))
-    return brief
+    return brief, tool_calls
+
+
+def first_error(group):
+    """The error inside an ExceptionGroup from the MCP client's task group, as a
+    SpecialistError (so the coordinators can report it instead of crashing)."""
+    for exc in group.exceptions:
+        if isinstance(exc, BaseExceptionGroup):
+            return first_error(exc)
+        if isinstance(exc, SpecialistError):
+            return exc
+        return SpecialistError(f"The supply tools failed: {type(exc).__name__}: {exc}")
+    return SpecialistError("The supply tools failed.")
 
 
 # ---------------------------------------------------------------------------
@@ -556,12 +637,21 @@ def finish_draft(result, run_dir, filename):
         result.reasons.append(f"order {result.order_id} has a late penalty")
     result.needs_person = bool(result.reasons)
     result.path = save_draft(result, run_dir, filename)
-    shown = (result.path.relative_to(REPO) if result.path.is_relative_to(REPO)
-             else result.path)
-    print(f"   saved {shown}"
+    print(f"   saved {display_path(result.path)}"
           + (f"  ** NEEDS A PERSON: {'; '.join(result.reasons)}" if result.needs_person
              else ""))
+    print_final_draft(result)
     return result
+
+
+def print_final_draft(result):
+    """Print the draft that came out of the review step, once."""
+    if result.recipient == "supplier":
+        print("\nFINAL DRAFT TO SUPPLIER")
+    else:
+        print(f"\nFINAL DRAFT TO CUSTOMER {result.order_id}")
+    print(result.text.strip())
+    print(f"Marked for a person: {'yes' if result.needs_person else 'no'}")
 
 
 def save_draft(result, run_dir, filename):
@@ -588,7 +678,8 @@ def save_draft(result, run_dir, filename):
 
 
 def new_run_dir(email, coordinator):
-    """A fresh folder in week-05/drafts for one coordinator run on one email."""
+    """A fresh folder in week-05/drafts/<company folder> for one coordinator run
+    on one email."""
     stamp = datetime.now().strftime("%Y%m%d-%H%M%S")
     return DRAFTS_DIR / f"{email.path.stem}-{coordinator}-{stamp}"
 
@@ -631,13 +722,17 @@ def customer_order_facts(order_at_risk):
     row = next((r for r in read_csv("orders.csv") if r["order_id"] == order_id), None)
     if row is None:
         raise SpecialistError(f"Order {order_id!r} is not in orders.csv.")
-    ship_day = int(row["ship_in_days"])
+    try:
+        ship_day, quantity = int(row["ship_day"]), int(row["quantity"])
+    except ValueError:
+        raise SpecialistError(f"Order {order_id}: ship day and quantity in orders.csv "
+                              "must be whole numbers.") from None
     ready_day = order_at_risk.get("ready_day")
     facts = {
         "order_id": order_id,
         "customer": row["customer"],
-        "model": row["model"],
-        "quantity": int(row["qty"]),
+        "product": row["product"],
+        "quantity": quantity,
         "planned_ship_day": ship_day,
         "expected_ship_day": ready_day,
         "days_later_than_planned": (ready_day - ship_day
@@ -664,9 +759,48 @@ async def prepare_customer_notice(order_at_risk, run_dir, sender="coordinator"):
     others = {n: v for n, v in customer_names().items() if n != row["customer"]}
     found = find_names(text, supplier_names()) | find_names(text, others)
     result = DraftResult(
-        recipient="customer", to=row.get("contact_email", ""),
-        subject=f"Your Brookfield order {facts['order_id']} - updated ship date",
+        recipient="customer", to=row["contact_email"],
+        subject=f"Your {SHORT} order {facts['order_id']} - updated ship date",
         text=text, verdict=verdict, revisions=revisions, reviewer_notes=notes,
         names_found=found, order_id=facts["order_id"],
-        late_penalty=row.get("late_penalty", "").lower() in ("yes", "y", "true", "1"))
+        late_penalty=row["late_penalty"].lower() in ("yes", "y", "true", "1"))
     return finish_draft(result, run_dir, f"customer-{facts['order_id']}.txt")
+
+
+# ---------------------------------------------------------------------------
+# Checking a company folder (no API calls)
+# ---------------------------------------------------------------------------
+
+def main():
+    for stream in (sys.stdout, sys.stderr):
+        stream.reconfigure(encoding="utf-8")
+    parser = argparse.ArgumentParser(
+        description="Check a company folder for the specialists: its CSV files, the "
+                    "column found for each role, its prompts, and its supplier "
+                    "emails. Makes no API calls.")
+    add_org_argument(parser)
+    args = parser.parse_args()
+    try:
+        set_org(args.org)
+    except SpecialistError as e:
+        parser.error(str(e))
+    print_org()
+    print(f"Prompts:     {', '.join(p.name for p in sorted(PROMPTS_DIR.glob('*.txt')))}")
+    emails = sorted((DATA_DIR / "supplier-emails").glob("*.eml"))
+    print(f"Emails:      {len(emails)}")
+    for path in emails:
+        print(f"  {display_path(path)}")
+    print(f"Drafts go to {display_path(DRAFTS_DIR)}")
+
+
+def add_org_argument(parser):
+    """The --org option shared by specialists.py, pipeline.py and orchestrator.py."""
+    parser.add_argument("--org", metavar="FOLDER", default=None,
+                        help="company folder: a name inside week-05 (such as "
+                             "copperline-coffee) or a path. It holds the five CSV "
+                             "files, prompts/, and supplier-emails/ "
+                             f"(default: {org.DEFAULT_ORG})")
+
+
+if __name__ == "__main__":
+    main()

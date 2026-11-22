@@ -1,0 +1,245 @@
+Coordinator: orchestrator (Claude chooses the specialists)
+Email file:  01-danforth-pump-delay.eml
+From:        d.kessler@danforthpump.example
+Subject:     PO-5512 - PU-20 pumps - partial shipment
+Model:       claude-sonnet-5
+Tools:       run_supply_analyst, draft_supplier_reply, draft_customer_notice, finish
+Company:     Copperline Coffee Machines
+Folder:      week-05\copperline-coffee
+Columns found in the header rows:
+  parts.csv: part number=part_id, stock on hand=on_hand, supplier=supplier, description=description
+  inbound.csv: purchase order=po_number, part number=part_id, arrival day=arrives_in_days, quantity=qty, supplier=supplier
+  orders.csv: contact email=contact_email, order number=order_id, late penalty=late_penalty, ship day=ship_by_day, quantity=units, product=product, customer=customer
+  bill-of-materials.csv: part number=part_id, parts per unit=per_unit, product=product
+  suppliers.csv: contact email=contact_email, supplier=supplier, contact name=contact_name
+   [orchestrator] tokens: 1,627 in, 51 out
+
+======================================================================
+Choice 1: run_supply_analyst 
+======================================================================
+
+>> HANDOFF  orchestrator -> supply analyst: supplier email 01-danforth-pump-delay.eml
+   PO-5512 - PU-20 pumps - partial shipment | Hello, I'm writing about PO-5512 for 200 PU-20 vibration pumps. A test rig on our assembly line failed inspection, and we can't release the full order on the scheduled date. We can deliver 40 of the 200 pumps on the scheduled date. The other 160 will follow...
+   [supply analyst] tools: check_coverage, get_orders_for_part, get_part
+   [supply analyst] tokens: 2,145 in, 126 out
+   [supply analyst] tool 1: get_part {"part_id": "PU-20"}
+      result: { "part_id": "PU-20", "description": "Vibration pump", "supplier": "Danforth Pump Works", "on_hand": 50, "scheduled_shipments": [ { "po_number": "PO-5512", "sup...
+   [supply analyst] tool 2: get_orders_for_part {"part_id": "PU-20"}
+      result: { "part_id": "PU-20", "total_units_needed": 184, "orders": [ { "order_id": "O-2201", "customer": "Morning Ritual Cafe", "product": "Cafe One", "units_ordered": ...
+   [supply analyst] tokens: 3,336 in, 142 out
+   [supply analyst] tool 3: check_coverage {"part_id": "PU-20", "arrivals": [{"day": 4, "qty": 40}, {"day": 19, "qty": 160}]}
+      result: { "part_id": "PU-20", "on_hand": 50, "arrivals_used": [ { "qty": 40, "day": 4 }, { "qty": 160, "day": 19 } ], "orders_short": 3, "units_short_total": 55, "order...
+   [supply analyst] tokens: 4,246 in, 599 out
+   [supply analyst] tool calls: 3
+
+>> HANDOFF  supply analyst -> orchestrator: brief (3 order(s) at risk, 0 option(s), 3 decision(s) for a person)
+
+ANALYST'S BRIEF
+{
+  "part_id": "PU-20",
+  "what_changed": "Instead of 200 units arriving on day 4, only 40 will arrive on day 4 and the remaining 160 will arrive on day 19 (15 days later).",
+  "orders_at_risk": [
+    {
+      "order_id": "O-2203",
+      "customer": "Elm State University Dining",
+      "units_short": 10,
+      "ship_day": 12,
+      "ready_day": 19,
+      "late_penalty": true
+    },
+    {
+      "order_id": "O-2204",
+      "customer": "Kettle & Crumb Bakery",
+      "units_short": 20,
+      "ship_day": 15,
+      "ready_day": 19,
+      "late_penalty": false
+    },
+    {
+      "order_id": "O-2205",
+      "customer": "Tall Pines Coffee House",
+      "units_short": 25,
+      "ship_day": 17,
+      "ready_day": 19,
+      "late_penalty": true
+    }
+  ],
+  "options": [],
+  "decisions_for_a_person": [
+    "Decide whether to expedite or source PU-20 pumps elsewhere to avoid delays on O-2203 (penalty, 7 days late) and O-2205 (penalty, 2 days late), and O-2204 (no penalty, 4 days late).",
+    "Decide whether/how to notify affected customers (Elm State University Dining, Kettle & Crumb Bakery, Tall Pines Coffee House) of the delay.",
+    "Prepare and send Danforth the requested list of customer orders (names and quantities) tied to PO-5512."
+  ],
+  "supplier_questions": [
+    "Danforth asked for a list of the customer orders these pumps are for, with each customer's name and quantity."
+  ]
+}
+   [orchestrator] tokens: 2,275 in, 332 out
+
+======================================================================
+Choice 2: draft_supplier_reply 
+======================================================================
+
+>> HANDOFF  orchestrator -> supplier writer: supplier email + brief (customer names removed)
+   {"part_id": "PU-20", "what_changed": "Instead of 200 units arriving on day 4, only 40 will arrive on day 4 and the remaining 160 will arrive on day 19 (15 days later).", "orders_at_risk": [{"order_id": "O-2203", "units_short": 10, "ship_day": 12, "ready_day": 19}, {"order_id": "O-2204", "units_short...
+   [supplier writer] tokens: 1,087 in, 543 out
+
+>> HANDOFF  supplier writer -> reviewer: draft for the supplier
+   Hello Diane, Thank you for the update on PO-5512. We confirm the change: 40 of the 200 PU-20 pumps will arrive on the scheduled date, with the remaining 160 following 15 days later. Based on our current order schedule, this shortfall leaves us 55 units short against orders that need to ship before t...
+   [reviewer] tokens: 1,378 in, 786 out
+
+>> HANDOFF  reviewer -> orchestrator: APPROVE after 0 revision(s)
+   APPROVE
+   saved week-05\drafts\copperline-coffee\01-danforth-pump-delay-orchestrator-20261121-190432\supplier-reply.txt
+
+FINAL DRAFT TO SUPPLIER
+Hello Diane,
+
+Thank you for the update on PO-5512. We confirm the change: 40 of the 200 PU-20 pumps will arrive on the scheduled date, with the remaining 160 following 15 days later.
+
+Based on our current order schedule, this shortfall leaves us 55 units short against orders that need to ship before the delayed pumps arrive, resulting in delays ranging from 2 to 7 days on the affected shipments.
+
+We're not able to share customer names or order details, but we can tell you the shortfall and delay impact as above if that helps with your planning.
+
+If there's any way to expedite a portion of the 160 units sooner — even a partial early shipment — that would help us reduce the delay. Please let us know what's possible.
+
+Regards,
+Purchasing, Copperline Coffee Machines
+Marked for a person: no
+
+======================================================================
+Choice 3: draft_customer_notice {"order_id": "O-2203"}
+======================================================================
+
+>> HANDOFF  orchestrator -> customer writer: facts for order O-2203 only
+   {"order_id": "O-2203", "customer": "Elm State University Dining", "product": "Cafe One", "quantity": 50, "planned_ship_day": 12, "expected_ship_day": 19, "days_later_than_planned": 7, "days_are_counted_from": "today, 2026-11-21"}
+   [customer writer] tokens: 381 in, 140 out
+
+>> HANDOFF  customer writer -> reviewer: draft for the customer
+   Dear Elm State University Dining, We're writing to update you on order O-2203 for 50 Cafe One machines. The order is now expected to ship 7 days later than originally planned. We apologize for this delay. It is due to a delay in a part from one of our suppliers. We will keep you informed of any furt...
+   [reviewer] tokens: 609 in, 359 out
+
+>> HANDOFF  reviewer -> orchestrator: APPROVE after 0 revision(s)
+   APPROVE
+   saved week-05\drafts\copperline-coffee\01-danforth-pump-delay-orchestrator-20261121-190432\customer-O-2203.txt  ** NEEDS A PERSON: order O-2203 has a late penalty
+
+FINAL DRAFT TO CUSTOMER O-2203
+Dear Elm State University Dining,
+
+We're writing to update you on order O-2203 for 50 Cafe One machines. The order is now expected to ship 7 days later than originally planned.
+
+We apologize for this delay. It is due to a delay in a part from one of our suppliers.
+
+We will keep you informed of any further updates regarding your order's progress.
+
+Thank you for your patience.
+
+Customer Service, Copperline Coffee Machines
+Marked for a person: yes
+
+======================================================================
+Choice 4: draft_customer_notice {"order_id": "O-2204"}
+======================================================================
+
+>> HANDOFF  orchestrator -> customer writer: facts for order O-2204 only
+   {"order_id": "O-2204", "customer": "Kettle & Crumb Bakery", "product": "Cafe Duo", "quantity": 10, "planned_ship_day": 15, "expected_ship_day": 19, "days_later_than_planned": 4, "days_are_counted_from": "today, 2026-11-21"}
+   [customer writer] tokens: 388 in, 188 out
+
+>> HANDOFF  customer writer -> reviewer: draft for the customer
+   Dear Kettle & Crumb Bakery, We're writing about your order O-2204 for 10 Cafe Duo units. We're sorry for the delay — this is now expected to ship 4 days later than originally planned. This delay is due to a part from one of our suppliers taking longer than expected to arrive. We understand timing is...
+   [reviewer] tokens: 664 in, 391 out
+
+>> HANDOFF  reviewer -> orchestrator: APPROVE after 0 revision(s)
+   APPROVE
+   saved week-05\drafts\copperline-coffee\01-danforth-pump-delay-orchestrator-20261121-190432\customer-O-2204.txt
+
+FINAL DRAFT TO CUSTOMER O-2204
+Dear Kettle & Crumb Bakery,
+
+We're writing about your order O-2204 for 10 Cafe Duo units. We're sorry for the delay — this is now expected to ship 4 days later than originally planned.
+
+This delay is due to a part from one of our suppliers taking longer than expected to arrive. We understand timing is important for your business and apologize for the inconvenience this may cause.
+
+We will keep you updated on the progress of your order and notify you as soon as it ships.
+
+Thank you for your patience and understanding.
+
+Customer Service, Copperline Coffee Machines
+Marked for a person: no
+
+======================================================================
+Choice 5: draft_customer_notice {"order_id": "O-2205"}
+======================================================================
+
+>> HANDOFF  orchestrator -> customer writer: facts for order O-2205 only
+   {"order_id": "O-2205", "customer": "Tall Pines Coffee House", "product": "Cafe One", "quantity": 25, "planned_ship_day": 17, "expected_ship_day": 19, "days_later_than_planned": 2, "days_are_counted_from": "today, 2026-11-21"}
+   [customer writer] tokens: 384 in, 156 out
+
+>> HANDOFF  customer writer -> reviewer: draft for the customer
+   Dear Tall Pines Coffee House, We are writing about your order O-2205 for 25 units of the Cafe One. Your order is now expected to ship 2 days later than originally planned. We apologize for this delay. The cause is a delay in a part from one of our suppliers. We will keep you updated on the progress ...
+   [reviewer] tokens: 628 in, 172 out
+
+>> HANDOFF  reviewer -> orchestrator: APPROVE after 0 revision(s)
+   APPROVE
+   saved week-05\drafts\copperline-coffee\01-danforth-pump-delay-orchestrator-20261121-190432\customer-O-2205.txt  ** NEEDS A PERSON: order O-2205 has a late penalty
+
+FINAL DRAFT TO CUSTOMER O-2205
+Dear Tall Pines Coffee House,
+
+We are writing about your order O-2205 for 25 units of the Cafe One.
+
+Your order is now expected to ship 2 days later than originally planned. We apologize for this delay.
+
+The cause is a delay in a part from one of our suppliers.
+
+We will keep you updated on the progress of your order and notify you once it has shipped.
+
+Thank you for your patience and for being a valued customer.
+
+Customer Service, Copperline Coffee Machines
+Marked for a person: yes
+   [orchestrator] tokens: 3,728 in, 453 out
+
+======================================================================
+Choice 6: finish {"summary": "Danforth Pump Works will deliver only 40 of 200 PU-20 pumps on schedule, with the remaining 160 arriving 15 days late. This creates shortfalls on three customer orders: O-2203 (Elm State University Dining, 10 units short, 7 days late, penalty applies), O-2204 (Kettle & Crumb Bakery, 20 units short, 4 days late, no penalty), and O-2205 (Tall Pines Coffee House, 25 units short, 2 days late, penalty applies). \n\nDrafted and saved for review: a supplier reply to Danforth confirming the revised shipment, declining to share customer-identifying details (per policy) but offering shortfall/delay impact, and asking if any partial early shipment of the 160 units is possible; and customer delay notices for all three affected orders.\n\nNeeds a person to: (1) decide whether to expedite/source PU-20 elsewhere to mitigate the two penalty-bearing delays (O-2203, O-2205), (2) approve/send the drafted customer notices and supplier reply, and (3) decide on Danforth's request for customer order details (reply currently declines to share this).", "needs_person_decision": true}
+======================================================================
+
+======================================================================
+SUMMARY (orchestrator, 01-danforth-pump-delay.eml)
+======================================================================
+Tool calls by the orchestrator: 6 of 10
+Orchestrator's summary: Danforth Pump Works will deliver only 40 of 200 PU-20 pumps on schedule, with the remaining 160 arriving 15 days late. This creates shortfalls on three customer orders: O-2203 (Elm State University Dining, 10 units short, 7 days late, penalty applies), O-2204 (Kettle & Crumb Bakery, 20 units short, 4 days late, no penalty), and O-2205 (Tall Pines Coffee House, 25 units short, 2 days late, penalty applies). 
+
+Drafted and saved for review: a supplier reply to Danforth confirming the revised shipment, declining to share customer-identifying details (per policy) but offering shortfall/delay impact, and asking if any partial early shipment of the 160 units is possible; and customer delay notices for all three affected orders.
+
+Needs a person to: (1) decide whether to expedite/source PU-20 elsewhere to mitigate the two penalty-bearing delays (O-2203, O-2205), (2) approve/send the drafted customer notices and supplier reply, and (3) decide on Danforth's request for customer order details (reply currently declines to share this).
+Orchestrator says a person must decide: yes
+What changed: Instead of 200 units arriving on day 4, only 40 will arrive on day 4 and the remaining 160 will arrive on day 19 (15 days later).
+Supplier reply: drafted
+
+Drafts saved: 4  (in week-05\drafts\copperline-coffee\01-danforth-pump-delay-orchestrator-20261121-190432)
+  - supplier-reply.txt       to d.kessler@danforthpump.example         reviewer APPROVE (0 revision(s)), ok
+  - customer-O-2203.txt      to dining@elmstate.example                reviewer APPROVE (0 revision(s)), NEEDS A PERSON
+  - customer-O-2204.txt      to owner@kettleandcrumb.example           reviewer APPROVE (0 revision(s)), ok
+  - customer-O-2205.txt      to hello@tallpinescoffee.example          reviewer APPROVE (0 revision(s)), NEEDS A PERSON
+
+Drafts marked for a person: 2
+  - customer-O-2203.txt: order O-2203 has a late penalty
+  - customer-O-2205.txt: order O-2205 has a late penalty
+
+Decisions for a person: 3
+  - Decide whether to expedite or source PU-20 pumps elsewhere to avoid delays on O-2203 (penalty, 7 days late) and O-2205 (penalty, 2 days late), and O-2204 (no penalty, 4 days late).
+  - Decide whether/how to notify affected customers (Elm State University Dining, Kettle & Crumb Bakery, Tall Pines Coffee House) of the delay.
+  - Prepare and send Danforth the requested list of customer orders (names and quantities) tied to PO-5512.
+
+Tokens by specialist
+  specialist         calls     input    output
+  orchestrator           3     7,630       836
+  supply analyst         3     9,727       867
+  supplier writer        1     1,087       543
+  reviewer               4     3,279     1,708
+  customer writer        3     1,153       484
+  total                       22,876     4,438
+
+Total tokens: 22,876 input, 4,438 output (27,314 in all)
+Nothing was sent.
