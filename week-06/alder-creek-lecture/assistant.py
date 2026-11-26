@@ -26,7 +26,7 @@ MODEL = "claude-opus-5-5"
 
 HERE = Path(__file__).resolve().parent
 ORG_DIR = HERE / "alder-creek"
-REPO_DIR = HERE.parent
+REPO_DIR = HERE.parent.parent  # week-06/alder-creek-lecture -> repository root
 KEY_DIR = REPO_DIR.parent  # folder above the repository
 KEY_FILES = ["API-Key.txt", "course_API.txt"]
 
