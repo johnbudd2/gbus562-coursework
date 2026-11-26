@@ -1,5 +1,5 @@
 # Packages for the capstone. Install into the repository's .venv:
 #   .venv\Scripts\python.exe -m pip install -r capstone\requirements.txt
-anthropic      # Claude API (cdi.py)
-chromadb       # guideline search index in capstone/.chroma (reference.py)
-pypdf          # reads the ICD-10-CM guidelines PDF (reference.py)
+anthropic      # Claude API (cdi_query.py, cdi.py)
+chromadb       # guideline search index in capstone/.chroma (reference.py, search_guidelines tool)
+pypdf          # reads the ICD-10-CM guidelines PDF to build the index (reference.py)

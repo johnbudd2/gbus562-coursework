@@ -44,7 +44,57 @@ Each query draft is also saved to `runs/drafts/<case>-query-<n>.txt`.
 
 The guideline index (`capstone/.chroma/`, not in git) is built automatically the first time. Rebuild it with `reference.py --rebuild`.
 
-## How it works
+## The CDI query agent (`cdi_query.py`)
+
+```
+cd capstone
+..\.venv\Scripts\python.exe cdi_query.py data/cases/case_03.md [--model claude-sonnet-5]
+```
+
+Claude (`claude-sonnet-5` by default) reviews one `.md` case in a tool-use loop and decides which tools to call, up to 12 calls per request:
+
+| Tool | Returns |
+|---|---|
+| `search_guidelines(query)` | top 4 ICD-10-CM guideline sections from the Chroma index, each with its section identifier |
+| `search_codes(term)` | up to 10 rows from `reference/cc_mcc.csv` whose description contains every word of the term |
+| `lookup_code(code, principal_code?)` | description and severity (MCC, CC, or NONE / not on list) from `cc_mcc.csv`, plus whether Table 6K excludes it with the principal diagnosis when one is given |
+
+The system prompt is `prompts/system_prompt.md` plus `prompts/query_standards.md` verbatim. Its rules:
+- severity may be stated only from a `lookup_code` result in this run;
+- every finding quotes the chart and cites the guideline section that makes it reportable;
+- lab-only abnormalities get no query;
+- if nothing applies, the answer is "No query indicated" with the reason.
+
+The output has a **Findings** section (action, candidate code, severity, evidence, guideline section) and a **Draft queries** section with one entry per finding, labeled "DRAFT — for CDI specialist review". Code then checks the answer and appends an **Automated checks** section, which warns if a quote isn't in the chart or a code's severity wasn't verified with `lookup_code`.
+
+Logging: one function (`write_log`) appends exactly one line per request to `runs/log.jsonl`. The fields are:
+- `timestamp` (UTC, to the second) and `model`;
+- `input`: the case file text exactly as read;
+- `output`: the final output, or `ERROR: …` for a failed run;
+- `input_tokens` and `output_tokens`, summed across every API call;
+- `seconds`: wall-clock time, to 2 decimals.
+
+Prompt caching is on, because the system prompt and the history repeat each turn. Cached input tokens are included in `input_tokens`.
+
+### Evaluating it (`eval.py`)
+
+```
+cd capstone
+..\.venv\Scripts\python.exe eval.py --split dev                      # or test / all
+..\.venv\Scripts\python.exe eval.py --split dev --model claude-sonnet-5 claude-opus-5-5
+..\.venv\Scripts\python.exe eval.py --split dev --cases case_10 case_12
+```
+
+Each case runs through `cdi_query.review()`, the tool's normal request function, so each case is logged normally. `eval.py` never writes the log. It scores each output against `data/answer_key.json` on four things:
+
+- **Recall and precision:** found candidate codes against `expected_code`, both as an exact match and as a 3-character category match.
+- **False queries:** a finding with "Action: query" that matches no expected gap and either is on a negative case or matches a `should_not_query` condition (keyword match).
+- **Unbacked severity:** a finding whose code wasn't passed to `lookup_code` in that run, or whose stated severity differs from `cc_mcc.csv`.
+- **Cost:** average input and output tokens and seconds.
+
+The report is printed and saved to `runs/eval_<UTC timestamp>.md`, with a table per model and totals per model.
+
+## How it works (first version: `cdi.py` pipeline)
 
 One request is one case. The pipeline is fixed: three steps run in code and two are Claude calls, plus at most one revision call per query.
 
@@ -73,7 +123,10 @@ The query text itself (header, indicators, question, options, closing line) is a
 
 | Path | What it is |
 |---|---|
-| `cdi.py` | command line and pipeline; writes `runs/log.jsonl` and `runs/drafts/` |
+| `cdi_query.py` | the CDI query agent: tool-use loop with `search_guidelines`, `search_codes`, `lookup_code` (max 12 calls); reads `.md` cases; writes `runs/log.jsonl` |
+| `eval.py` | runs `cdi_query.review()` over answer-key cases (`--split`, `--model`, `--cases`), scores recall/precision (exact and category), false queries and unbacked severity; saves `runs/eval_<timestamp>.md` |
+| `prompts/system_prompt.md` | the agent's system prompt (rules and output format); `query_standards.md` is appended verbatim |
+| `cdi.py` | first version: fixed pipeline over the JSON cases; writes `runs/log.jsonl` and `runs/drafts/` |
 | `reference.py` | loads the ICD-10-CM and CMS tables, looks up codes, builds and searches the guideline index; `--check`, `--rebuild`, `--search` |
 | `checks.py` | evidence-quote check, CC/MCC and exclusion filter, query compliance check, query text |
 | `evaluate.py` | runs every case and checks results in code; `--save`, `--only` |
@@ -151,4 +204,6 @@ The first full version is built. It includes the reference data, 10 cases, the p
 | 2026-11-26 | Drafted `prompts/query_standards.md` (physician query standards) for the project owner to review and edit. It is not wired into the tool yet. |
 | 2026-11-26 | Built a 24-case evaluation set and `answer_key.json` by hand, with no API calls, plus `validate_cases.py`. Added `reference/cc_mcc.csv`, generated from the CMS tables. |
 | 2026-11-26 | In FY 2027, E66.01 (morbid obesity) and pressure ulcer stages 1, 2 and unspecified are not CCs; stages 3 and 4 are MCCs. So the two gaps chosen freely are hypernatremia and chemo-induced pancytopenia, and the pressure-ulcer cases turn on stage. |
+| 2026-11-26 | Built `cdi_query.py`, a tool-use agent (the project owner's spec), replacing the fixed pipeline as the main tool. It is a manual Messages API loop, so the 12-call cap and token totals are explicit. `lookup_code` takes an optional `principal_code` so Table 6K exclusions stay checked. Code checks quotes and severity verification after the model answers. |
+| 2026-11-26 | Ran `cdi_query.py` on 9 dev cases and reviewed every output as a CDI manager (`docs/dev-run-review.md`). The findings were right in all 9 runs, but 4 of the 7 query drafts need edits: unsupported answer options, a desired diagnosis in an indicator, and non-verbatim quotes. Also found the `CORE_LABELS` I.B.19 → I.A.19 bug in `reference.py`. Nothing fixed yet; log lines 22–31 are kept unchanged as "Failed run" candidates. |
 | 2026-11-26 | Answer key adds `action` (`query`/`code`) and `replaces_code` to each expected item. A pressure-ulcer stage from the WOC nurse (Guideline I.B.14) and an ATN diagnosis coded as unspecified AKI are coding fixes, not queries. |
