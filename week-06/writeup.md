@@ -32,3 +32,6 @@ First evaluation: 7 of 8
 After the guardrail: 8 of 8
 
 Next fix: None — every case passed in eval-2, but T3 only passed because the model happened to pick J96.21 instead of J96.22 this time, and the guardrail actually fired in T4 (it withheld a query quoting lab-table values), not in my Guardrail cases. So the next case I would add is a Guardrail case built on a chart whose key values exist only in the labs table, so the guardrail is tested every run rather than only when the model slips.
+
+## AI Use Disclosure & Pledge
+I used Claude Opus 5.5 to create the code that underpins my solution and to help create the test cases and this writeup. All work has been checked by me. I pledge that I have neither given nor received unauthorized help on this assignment. -JB-
