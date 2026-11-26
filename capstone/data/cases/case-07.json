@@ -1,0 +1,33 @@
+{
+  "id": "case-07",
+  "title": "Hyponatremia that the principal diagnosis excludes as a CC",
+  "discharge_summary": [
+    "SYNTHETIC CASE - NOT A REAL PATIENT",
+    "Discharge Summary",
+    "Patient: Synthetic Patient 07, 81-year-old female. MRN: SYN-0007",
+    "Admission date: 07/21   Discharge date: 07/23",
+    "Attending: Hospitalist G (fictional)",
+    "",
+    "Reason for admission: Weakness, dizziness, and poor oral intake during a heat wave.",
+    "",
+    "Hospital course:",
+    "She was found to have dry mucous membranes, orthostatic hypotension, and BUN 42 with creatinine 1.0 (her baseline). Sodium was 128 mmol/L on admission. She was treated with IV normal saline at 100 mL/hr, and sodium was checked every 6 hours, rising to 133 on day 2 and 136 at discharge. Hydrochlorothiazide was stopped. Orthostatic symptoms resolved and she was walking independently by day 2.",
+    "",
+    "Discharge diagnoses:",
+    "1. Dehydration",
+    "2. Hypertension",
+    "",
+    "Discharge plan: Stop hydrochlorothiazide; start amlodipine 5 mg daily. Encourage oral fluids. Basic metabolic panel in 1 week."
+  ],
+  "codes": {
+    "principal": "E86.0",
+    "secondary": [
+      "I10"
+    ]
+  },
+  "expected": {
+    "candidates": [],
+    "allowed_extra": [],
+    "notes": "Sodium 128 was monitored and treated, so hyponatremia is clinically supported, but E87.1 is a CC that the CMS exclusion list treats as a non-CC when E86.0 is the principal diagnosis. The tool should drop it (no query for CC/MCC purposes)."
+  }
+}

@@ -1,11 +1,22 @@
-# Python virtual environment
+# Python virtual environments
 .venv/
+venv/
+
+# Node packages
+node_modules/
 
 # Python bytecode cache
 __pycache__/
+
+# Secrets: never commit these
+.env
+API-Key.txt
 
 # Chroma vector database (rebuild with: python week-03/ask.py --rebuild)
 week-03/chroma_db/
 
 # Chroma vector database for the week-04 MCP server (rebuild with: python week-04/hr_mcp_server.py --rebuild)
 week-04/chroma_db/
+
+# Chroma vector database for the capstone
+capstone/.chroma/

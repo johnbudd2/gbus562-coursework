@@ -1,0 +1,40 @@
+{
+  "id": "case-08",
+  "title": "Brief SIRS with no organ dysfunction: weak sepsis evidence",
+  "discharge_summary": [
+    "SYNTHETIC CASE - NOT A REAL PATIENT",
+    "Discharge Summary",
+    "Patient: Synthetic Patient 08, 58-year-old female. MRN: SYN-0008",
+    "Admission date: 08/03   Discharge date: 08/05",
+    "Attending: Hospitalist H (fictional)",
+    "",
+    "Reason for admission: Burning with urination, urinary frequency, and fever.",
+    "",
+    "Hospital course:",
+    "On arrival her temperature was 38.4 C and heart rate 104. Both normalized within 6 hours after acetaminophen and oral fluids. Blood pressure was 128/76 and remained normal. White blood cell count was 11.2. Lactate was 1.4. Creatinine, bilirubin, and platelet count were normal, and mental status was normal throughout. Urine culture grew E. coli. She was treated with IV ceftriaxone for 24 hours and then oral cephalexin.",
+    "",
+    "Discharge diagnoses:",
+    "1. Acute cystitis due to E. coli",
+    "2. Type 2 diabetes mellitus",
+    "",
+    "Discharge plan: Cephalexin to complete 5 days. Follow up with primary care as needed."
+  ],
+  "codes": {
+    "principal": "N30.00",
+    "secondary": [
+      "B96.20",
+      "E11.9"
+    ]
+  },
+  "expected": {
+    "candidates": [],
+    "allowed_extra": [],
+    "forbidden": [
+      "A41.9",
+      "A41.51",
+      "R65.20",
+      "R65.21"
+    ],
+    "notes": "Fever and tachycardia briefly, normal lactate, and no organ dysfunction. These are not enough clinical indicators to query for sepsis; a sepsis query here would be unsupported. No candidates."
+  }
+}

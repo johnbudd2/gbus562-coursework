@@ -1,0 +1,25 @@
+CDI tool evaluation - model claude-sonnet-5, 10 cases
+
+PASS case-01 (Pneumonia with a creatinine rise that is never named)
+   found: N17.9 query | 2 calls, 14,724 tokens, 18s
+PASS case-02 (COPD exacerbation with heart failure of unstated type and acuity)
+   found: I50.23 query | 2 calls, 13,278 tokens, 19s
+PASS case-03 (Severe malnutrition documented only by the dietitian)
+   found: E43 query | 2 calls, 14,169 tokens, 20s
+PASS case-04 (Acute respiratory failure documented but not coded)
+   found: J96.01 coding | 1 calls, 12,130 tokens, 12s
+PASS case-05 (Uncomplicated appendicitis: nothing to query)
+   found: nothing | 1 calls, 7,953 tokens, 5s
+PASS case-06 (Severe sepsis already captured, with one insignificant lab value)
+   found: nothing | 1 calls, 11,208 tokens, 10s
+PASS case-07 (Hyponatremia that the principal diagnosis excludes as a CC)
+   found: nothing; dropped: E87.1 | 1 calls, 8,913 tokens, 14s
+PASS case-08 (Brief SIRS with no organ dysfunction: weak sepsis evidence)
+   found: nothing | 1 calls, 12,106 tokens, 11s
+PASS case-09 ('Likely' acute blood loss anemia after knee replacement)
+   found: D62 coding | 1 calls, 11,826 tokens, 10s
+PASS case-10 ('Acute confusion' with hyponatremia: possible metabolic encephalopathy)
+   found: G93.41 query | 2 calls, 15,436 tokens, 33s
+
+10/10 passed
+Totals: 14 Claude calls, 107,205 input tokens, 14,538 output tokens, 151 seconds

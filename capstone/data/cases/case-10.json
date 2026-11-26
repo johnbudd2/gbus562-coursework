@@ -1,0 +1,52 @@
+{
+  "id": "case-10",
+  "title": "'Acute confusion' with hyponatremia: possible metabolic encephalopathy",
+  "discharge_summary": [
+    "SYNTHETIC CASE - NOT A REAL PATIENT",
+    "Discharge Summary",
+    "Patient: Synthetic Patient 10, 79-year-old male. MRN: SYN-0010",
+    "Admission date: 10/05   Discharge date: 10/10",
+    "Attending: Hospitalist J (fictional)",
+    "",
+    "Reason for admission: Acute confusion and fever.",
+    "",
+    "Hospital course:",
+    "His daughter reports he has mild dementia but normally recognizes family, feeds himself, and walks with a cane. On arrival he was disoriented to time and place, could not follow two-step commands, and had fluctuating attention. He required a sitter for safety on days 1-3.",
+    "Sodium was 126 mmol/L. Urinalysis showed pyuria, and urine culture grew Klebsiella pneumoniae. CT of the head showed no acute findings. Ammonia and TSH were normal.",
+    "He was treated with IV ceftriaxone and fluid restriction, and sodium was checked every 6 hours, rising to 134 by day 4. Mental status returned to his baseline on day 4, and he was oriented to person and place at discharge.",
+    "",
+    "Discharge diagnoses:",
+    "1. Urinary tract infection due to Klebsiella pneumoniae",
+    "2. Acute confusion, resolved",
+    "3. Hyponatremia",
+    "4. Dementia",
+    "",
+    "Discharge plan: Oral cefuroxime to complete 7 days. Fluid restriction 1.5 L per day. Repeat sodium in 3 days."
+  ],
+  "codes": {
+    "principal": "N39.0",
+    "secondary": [
+      "B96.1",
+      "E87.1",
+      "F03.90",
+      "I10"
+    ]
+  },
+  "expected": {
+    "candidates": [
+      {
+        "codes": [
+          "G93.41",
+          "G93.40",
+          "G93.49",
+          "G92.8",
+          "G92.9",
+          "F05"
+        ],
+        "status": "needs_query"
+      }
+    ],
+    "allowed_extra": [],
+    "notes": "'Acute confusion' is a symptom. Acute change from baseline, inattention, sitter, and correction of sodium with return to baseline point to metabolic encephalopathy (G93.41, MCC) or delirium due to a known physiological condition (F05). Query; the case already has a CC (E87.1), so this would raise it to MCC. Toxic or toxic metabolic encephalopathy (G92.8/G92.9, MCC) is also accepted: the code is only used for the CC/MCC lookup, and the provider chooses the diagnosis."
+  }
+}

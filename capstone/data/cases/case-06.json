@@ -1,0 +1,38 @@
+{
+  "id": "case-06",
+  "title": "Severe sepsis already captured, with one insignificant lab value",
+  "discharge_summary": [
+    "SYNTHETIC CASE - NOT A REAL PATIENT",
+    "Discharge Summary",
+    "Patient: Synthetic Patient 06, 77-year-old male. MRN: SYN-0006",
+    "Admission date: 02/14   Discharge date: 02/19",
+    "Attending: Hospitalist F (fictional)",
+    "",
+    "Reason for admission: Fever, chills, and low blood pressure.",
+    "",
+    "Hospital course:",
+    "The patient presented with temperature 39.4 C, heart rate 118, blood pressure 86/50 that responded to a 30 mL/kg IV fluid bolus, and lactate 3.8. Urinalysis showed pyuria and urine and blood cultures grew E. coli. Creatinine was 2.6 from a baseline of 1.1. He was diagnosed with severe sepsis due to E. coli urinary tract infection with acute kidney injury due to sepsis, and treated with IV ceftriaxone. Creatinine returned to 1.2 by discharge.",
+    "Potassium was 3.4 on day 3; it was 3.8 the next morning without any supplementation.",
+    "",
+    "Discharge diagnoses:",
+    "1. Severe sepsis due to E. coli urinary tract infection",
+    "2. Acute kidney injury due to sepsis, resolved",
+    "3. Hypertension",
+    "",
+    "Discharge plan: Oral ciprofloxacin to complete 10 days. Repeat basic metabolic panel in 1 week."
+  ],
+  "codes": {
+    "principal": "A41.51",
+    "secondary": [
+      "R65.20",
+      "N39.0",
+      "N17.9",
+      "I10"
+    ]
+  },
+  "expected": {
+    "candidates": [],
+    "allowed_extra": [],
+    "notes": "Sepsis, severe sepsis, UTI, and AKI are all documented and coded. The single potassium of 3.4 corrected without treatment, so it is not a reportable diagnosis (Section III.B). No candidates."
+  }
+}

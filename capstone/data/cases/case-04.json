@@ -1,0 +1,45 @@
+{
+  "id": "case-04",
+  "title": "Acute respiratory failure documented but not coded",
+  "discharge_summary": [
+    "SYNTHETIC CASE - NOT A REAL PATIENT",
+    "Discharge Summary",
+    "Patient: Synthetic Patient 04, 61-year-old male. MRN: SYN-0004",
+    "Admission date: 01/08   Discharge date: 01/13",
+    "Attending: Hospitalist D (fictional)",
+    "",
+    "Reason for admission: Fever, cough, and severe shortness of breath.",
+    "",
+    "Hospital course:",
+    "On arrival his oxygen saturation was 84% on room air, respiratory rate 32, with use of accessory muscles. Arterial blood gas showed pO2 52 mmHg. He was placed on BiPAP for 24 hours, then weaned to 4 L nasal cannula and to room air by day 4. Chest x-ray showed left lower lobe consolidation, and he was treated with IV ceftriaxone and azithromycin.",
+    "Blood glucose was managed with his home basal insulin dose.",
+    "",
+    "Discharge diagnoses:",
+    "1. Left lower lobe pneumonia",
+    "2. Acute hypoxic respiratory failure secondary to pneumonia, resolved",
+    "3. Type 2 diabetes mellitus",
+    "4. Hypertension",
+    "",
+    "Discharge plan: Complete oral antibiotics. Follow up with primary care in 1 week."
+  ],
+  "codes": {
+    "principal": "J18.9",
+    "secondary": [
+      "E11.9",
+      "Z79.4",
+      "I10"
+    ]
+  },
+  "expected": {
+    "candidates": [
+      {
+        "codes": [
+          "J96.01"
+        ],
+        "status": "documented_not_coded"
+      }
+    ],
+    "allowed_extra": [],
+    "notes": "The physician clearly documents acute hypoxic respiratory failure, but the code list leaves out J96.01 (MCC). This goes back to coding; no physician query is needed."
+  }
+}

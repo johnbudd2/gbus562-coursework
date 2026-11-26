@@ -1,0 +1,23 @@
+PHYSICIAN QUERY - DOCUMENTATION CLARIFICATION (DRAFT FOR CDI REVIEW)
+Patient: case-01
+Subject: Clarification: renal function
+
+Clinical indicators from the medical record:
+  - "Creatinine was 2.3 mg/dL on admission; his baseline creatinine is 1.0 mg/dL per clinic records from last month."
+  - "Urine output was 0.4 mL/kg/hr for the first 12 hours."
+  - "Metformin and lisinopril were held."
+  - "He received IV normal saline at 125 mL/hr for 48 hours."
+  - "Creatinine improved to 1.6 on hospital day 2 and 1.1 at discharge."
+  - "Repeat basic metabolic panel in 1 week."
+
+Based on your clinical judgment, can the renal function changes documented during this admission be further characterized?
+
+  [ ] Acute kidney injury
+  [ ] Chronic kidney disease with acute exacerbation
+  [ ] Prerenal azotemia without acute kidney injury
+  [ ] Expected lab variation without clinical significance
+  [ ] Other (please specify)
+  [ ] Clinically undetermined
+
+Please respond based on your independent clinical judgment. Any response, including
+"clinically undetermined", is acceptable. Please record your response in the medical record.

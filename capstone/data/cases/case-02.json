@@ -1,0 +1,57 @@
+{
+  "id": "case-02",
+  "title": "COPD exacerbation with heart failure of unstated type and acuity",
+  "discharge_summary": [
+    "SYNTHETIC CASE - NOT A REAL PATIENT",
+    "Discharge Summary",
+    "Patient: Synthetic Patient 02, 68-year-old female. MRN: SYN-0002",
+    "Admission date: 04/11   Discharge date: 04/15",
+    "Attending: Hospitalist B (fictional)",
+    "",
+    "Reason for admission: Worsening shortness of breath, wheezing, and leg swelling for 5 days.",
+    "",
+    "Past medical history: COPD (former smoker, quit 2015), heart failure, hypertension, hyperlipidemia.",
+    "",
+    "Hospital course:",
+    "The patient was admitted with a COPD exacerbation and treated with nebulized albuterol and ipratropium, IV methylprednisolone, and doxycycline.",
+    "On admission she had 3+ bilateral pitting edema to the knees and bibasilar crackles. Chest x-ray showed pulmonary vascular congestion and small bilateral pleural effusions. BNP was 1,450 pg/mL. Echocardiogram on hospital day 2 showed left ventricular ejection fraction of 25-30% with global hypokinesis.",
+    "She was given IV furosemide 40 mg twice daily for 3 days with 3.2 kg net weight loss, then changed to oral furosemide 40 mg daily. Edema improved to trace by discharge.",
+    "Wheezing resolved and she was weaned to room air on hospital day 3.",
+    "",
+    "Discharge diagnoses:",
+    "1. COPD with acute exacerbation",
+    "2. Heart failure",
+    "3. Hypertension",
+    "4. Hyperlipidemia",
+    "",
+    "Discharge plan: Prednisone taper, doxycycline to complete 5 days, furosemide 40 mg daily, follow up with cardiology in 1 week."
+  ],
+  "codes": {
+    "principal": "J44.1",
+    "secondary": [
+      "I11.0",
+      "I50.9",
+      "E78.5",
+      "Z87.891"
+    ]
+  },
+  "expected": {
+    "candidates": [
+      {
+        "codes": [
+          "I50.21",
+          "I50.23",
+          "I50.20",
+          "I50.22",
+          "I50.31",
+          "I50.33",
+          "I50.41",
+          "I50.43"
+        ],
+        "status": "needs_query"
+      }
+    ],
+    "allowed_extra": [],
+    "notes": "Heart failure is documented without type or acuity. EF 25-30%, BNP 1,450, congestion on x-ray, and IV diuresis point to acute (or acute on chronic) systolic heart failure (I50.21/I50.23, MCC). Query for type and acuity."
+  }
+}

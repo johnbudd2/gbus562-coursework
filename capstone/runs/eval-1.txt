@@ -1,0 +1,25 @@
+CDI tool evaluation - model claude-sonnet-5, 10 cases
+
+PASS case-01 (Pneumonia with a creatinine rise that is never named)
+   found: N17.9 query | 2 calls, 14,147 tokens, 13s
+PASS case-02 (COPD exacerbation with heart failure of unstated type and acuity)
+   found: I50.23 query | 2 calls, 13,246 tokens, 19s
+PASS case-03 (Severe malnutrition documented only by the dietitian)
+   found: E43 query | 2 calls, 14,007 tokens, 18s
+PASS case-04 (Acute respiratory failure documented but not coded)
+   found: J96.01 coding | 1 calls, 12,268 tokens, 12s
+PASS case-05 (Uncomplicated appendicitis: nothing to query)
+   found: nothing | 1 calls, 7,911 tokens, 4s
+PASS case-06 (Severe sepsis already captured, with one insignificant lab value)
+   found: nothing | 1 calls, 11,156 tokens, 8s
+PASS case-07 (Hyponatremia that the principal diagnosis excludes as a CC)
+   found: nothing; dropped: E87.1 | 1 calls, 8,547 tokens, 10s
+PASS case-08 (Brief SIRS with no organ dysfunction: weak sepsis evidence)
+   found: nothing | 1 calls, 11,699 tokens, 8s
+PASS case-09 ('Likely' acute blood loss anemia after knee replacement)
+   found: D62 coding | 1 calls, 11,734 tokens, 9s
+FAIL case-10 ('Acute confusion' with hyponatremia: possible metabolic encephalopathy): missed G93.41 needs_query; unexpected candidate G92.9 Toxic-metabolic encephalopathy (acute altered mental status due to severe hyponatremia/acute illness) (needs_query)
+   found: G92.9 query | 2 calls, 14,623 tokens, 25s
+
+9/10 passed
+Totals: 14 Claude calls, 107,231 input tokens, 12,107 output tokens, 127 seconds

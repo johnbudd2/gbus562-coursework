@@ -1,0 +1,313 @@
+[
+  {
+    "case_id": "case_01",
+    "split": "dev",
+    "case_type": "gap",
+    "gap_count": 1,
+    "expected": [
+      {"condition": "Hyponatremia", "expected_code": "E87.1", "severity": "CC", "action": "query", "replaces_code": null,
+       "key_evidence": "Na 124 -> 127 -> 131 -> 133 (HD1-HD4); serum osm 258; HCTZ held; fluid restriction 1.2 L; BMP q6h. Physician lists only 'Na 124 on adm, improving w/ FR' — a lab value, not a diagnosis."}
+    ],
+    "should_not_query": [
+      {"condition": "Acute respiratory failure", "reason": "SpO2 90% RA improved to 94% with nebs; no supplemental O2 or ventilatory support beyond nebs; indicators insufficient."},
+      {"condition": "Steroid-induced hyperglycemia", "reason": "Already documented and coded (R73.9 + T38.0X5A); not a CC."}
+    ]
+  },
+  {
+    "case_id": "case_02",
+    "split": "dev",
+    "case_type": "gap",
+    "gap_count": 1,
+    "expected": [
+      {"condition": "Acute blood loss anemia", "expected_code": "D62", "severity": "CC", "action": "query", "replaces_code": "D64.9",
+       "key_evidence": "Hgb 12.6 -> 9.8 -> 7.4 (HD1-HD2) with active diverticular bleed; orthostatic HR 112; 2u PRBC HD2. Physician documents only 'Anemia — transfused 2u'."}
+    ],
+    "should_not_query": [
+      {"condition": "Hypovolemic shock", "reason": "Orthostatic but BP 104/62 supine and responded to 1 L NS; no shock physiology documented."}
+    ]
+  },
+  {
+    "case_id": "case_03",
+    "split": "dev",
+    "case_type": "gap",
+    "gap_count": 1,
+    "expected": [
+      {"condition": "Severe protein-calorie malnutrition", "expected_code": "E43", "severity": "MCC", "action": "query", "replaces_code": null,
+       "key_evidence": "RD HD2: BMI 16.8, 15% wt loss in ~6 mo, intake <50% x >1 mo, severe muscle wasting and fat loss, meets ASPEN/AND severe criteria; Ensure Plus TID, calorie counts. Physician writes only 'Poor PO intake, thin/frail' (Guideline I.B.14: dietitian cannot establish the diagnosis)."}
+    ],
+    "should_not_query": [
+      {"condition": "Sepsis", "reason": "T 38.6, HR 98, WBC 14.2 but lactate 1.2 and no organ dysfunction; localized aspiration pneumonia only."}
+    ]
+  },
+  {
+    "case_id": "case_04",
+    "split": "dev",
+    "case_type": "gap",
+    "gap_count": 1,
+    "expected": [
+      {"condition": "Acute respiratory failure with hypoxia", "expected_code": "J96.01", "severity": "MCC", "action": "query", "replaces_code": "R09.02",
+       "key_evidence": "HD1 SpO2 84% RA, RR 32, accessory muscle use, ABG PaO2 54 on RA; HFNC 40 L/min FiO2 50% HD1, weaned to RA HD4. Physician documents only 'Hypoxia — req HFNC'."}
+    ],
+    "should_not_query": [
+      {"condition": "Bacterial pneumonia / sepsis", "reason": "Procalcitonin 0.31, antibiotics stopped for low suspicion; lactate not elevated, no organ dysfunction beyond the respiratory finding being queried."}
+    ]
+  },
+  {
+    "case_id": "case_05",
+    "split": "dev",
+    "case_type": "gap",
+    "gap_count": 1,
+    "expected": [
+      {"condition": "Metabolic encephalopathy", "expected_code": "G93.41", "severity": "MCC", "action": "query", "replaces_code": "R41.82",
+       "key_evidence": "Independent, cognitively intact baseline; HD1 oriented to self only, inattentive, CAM+; CT head neg, NH3/TSH/B12/Ca normal; 1:1 sitter HD1-2; back to baseline HD4 with treatment of pyelonephritis. Physician documents 'AMS — resolved w/ tx of infection'."}
+    ],
+    "should_not_query": [
+      {"condition": "Sepsis", "reason": "T 38.8 and WBC 15.6, but HR 96, BP normal, lactate 1.3, Cr normal; no organ dysfunction other than the mental status change being queried."}
+    ]
+  },
+  {
+    "case_id": "case_06",
+    "split": "dev",
+    "case_type": "gap",
+    "gap_count": 1,
+    "expected": [
+      {"condition": "Acute kidney injury", "expected_code": "N17.9", "severity": "CC", "action": "query", "replaces_code": null,
+       "key_evidence": "Cr 2.4 (baseline 1.0) -> 1.7 -> 1.2 -> 1.1 (HD1-HD4); UOP 300 mL first 12h; metformin/lisinopril held; IVF bolus + maintenance; renal US. Physician documents 'Dehydration w/ elevated Cr'."}
+    ],
+    "should_not_query": [
+      {"condition": "Metabolic acidosis", "reason": "HCO3 20 on HD1 only, corrected with fluids; not separately evaluated or treated."}
+    ]
+  },
+  {
+    "case_id": "case_07",
+    "split": "dev",
+    "case_type": "double_gap",
+    "gap_count": 2,
+    "expected": [
+      {"condition": "Heart failure type and acuity (acute on chronic diastolic)", "expected_code": "I50.33", "severity": "MCC", "action": "query", "replaces_code": "I50.9",
+       "key_evidence": "Known grade II diastolic dysfunction, echo HD2 EF 55-60%; BNP 980; JVD, 2+ edema, CXR interstitial edema; furosemide 40 IV BID, net -2.8 L. Physician writes only 'CHF exacerbation'."},
+      {"condition": "Acute kidney injury", "expected_code": "N17.9", "severity": "CC", "action": "query", "replaces_code": null,
+       "key_evidence": "Cr 1.1 (baseline) -> 1.9 HD3 -> 1.5 HD5; UOP ~20 mL/h; furosemide and lisinopril held, NS bolus. Physician writes 'Cr bump from overdiuresis'."}
+    ],
+    "should_not_query": [
+      {"condition": "Sepsis", "reason": "T 38.3, WBC 13.4 with pneumonia, but no hypotension, normal mental status, and no organ dysfunction attributed to infection."}
+    ]
+  },
+  {
+    "case_id": "case_08",
+    "split": "dev",
+    "case_type": "double_gap",
+    "gap_count": 2,
+    "expected": [
+      {"condition": "Severe protein-calorie malnutrition", "expected_code": "E43", "severity": "MCC", "action": "query", "replaces_code": null,
+       "key_evidence": "RD HD2: BMI 15.9, 14% wt loss ~3 mo, intake ~25% x >2 wk, severe muscle wasting and fat loss, meets ASPEN/AND severe criteria; Juven, Ensure Plus TID, MVI/zinc/vit C. Physician writes only 'Poor nutritional status'."},
+      {"condition": "Pressure ulcer of sacrum, stage 4", "expected_code": "L89.154", "severity": "MCC", "action": "code", "replaces_code": "L89.159",
+       "key_evidence": "Physician documents 'sacral decubitus ulcer, POA'; WOC RN documents 'Stage 4 pressure injury, bone palpable'. Guideline I.B.14 allows the stage from the WOC nurse once the provider documents the ulcer — recode, no query needed."}
+    ],
+    "should_not_query": [
+      {"condition": "Pressure ulcer stage", "reason": "Do not query the physician for the stage; the WOC nurse's stage can be coded (Guideline I.B.14)."}
+    ]
+  },
+  {
+    "case_id": "case_09",
+    "split": "dev",
+    "case_type": "negative",
+    "gap_count": 0,
+    "expected": [],
+    "should_not_query": [
+      {"condition": "Heart failure type/acuity", "reason": "Documented 'Acute on chronic systolic CHF' and coded I50.23 — already at full specificity."},
+      {"condition": "Acute kidney injury", "reason": "Documented 'AKI, cardiorenal' and coded N17.9."},
+      {"condition": "Hyponatremia", "reason": "Na 135-137 is within normal range."}
+    ]
+  },
+  {
+    "case_id": "case_10",
+    "split": "dev",
+    "case_type": "negative",
+    "gap_count": 0,
+    "expected": [],
+    "should_not_query": [
+      {"condition": "Hyponatremia", "reason": "Single Na 133 on HD1; not evaluated, treated, or monitored (no repeat BMP) — Section III.B."},
+      {"condition": "Hypokalemia", "reason": "Single K 3.4; not treated or monitored (and not a CC)."},
+      {"condition": "Sepsis", "reason": "WBC 13.2 and T 38.0 are expected with acute cholecystitis; vitals otherwise stable, no organ dysfunction."}
+    ]
+  },
+  {
+    "case_id": "case_11",
+    "split": "dev",
+    "case_type": "negative",
+    "gap_count": 0,
+    "expected": [],
+    "should_not_query": [
+      {"condition": "Acute respiratory failure with hypoxia", "reason": "Documented and coded (J96.01)."},
+      {"condition": "Hyponatremia", "reason": "Documented 'Hyponatremia, hypovolemic' and coded (E87.1)."},
+      {"condition": "Sepsis", "reason": "Fever, HR 108, WBC 18.1 with pneumonia, but lactate 1.6, BP 124/76, Cr normal; respiratory failure already attributed to pneumonia by the physician."}
+    ]
+  },
+  {
+    "case_id": "case_12",
+    "split": "dev",
+    "case_type": "trap",
+    "gap_count": 0,
+    "expected": [],
+    "should_not_query": [
+      {"condition": "Malnutrition", "reason": "Lab-only abnormality (albumin 2.4, prealbumin 9). BMI 27.1, weight stable, eating 100%, normal NFPE; RD states criteria NOT met and attributes low albumin to inflammation (CRP 96). A malnutrition query would introduce an unsupported diagnosis and be leading."}
+    ]
+  },
+  {
+    "case_id": "case_13",
+    "split": "dev",
+    "case_type": "trap",
+    "gap_count": 1,
+    "expected": [
+      {"condition": "Acute on chronic hypoxic respiratory failure (conflicting documentation)", "expected_code": "J96.21", "severity": "MCC", "action": "query", "replaces_code": "J96.11",
+       "key_evidence": "Hospitalist H&P HD1: 'Acute on chronic hypoxic and hypercapnic resp failure', SpO2 82% on home 2 L, RR 28, BiPAP. Pulmonology HD2: 'I do not feel she had acute respiratory failure.' Discharge summary lists only chronic respiratory failure. Conflict between providers requires a clarification query to the attending, not a choice by the coder."}
+    ],
+    "should_not_query": [
+      {"condition": "A query that states acute respiratory failure was present", "reason": "The query must present both providers' documentation neutrally and ask for clarification; it must not assert the hospitalist's diagnosis."}
+    ]
+  },
+  {
+    "case_id": "case_14",
+    "split": "dev",
+    "case_type": "trap",
+    "gap_count": 1,
+    "expected": [
+      {"condition": "Acute kidney injury due to acute tubular necrosis", "expected_code": "N17.0", "severity": "MCC", "action": "code", "replaces_code": "N17.9",
+       "key_evidence": "Discharge diagnosis: 'AKI due to ATN (per nephrology)'; nephrology: muddy brown casts, FENa 3.1%. Coded only N17.9 — the documentation already supports N17.0; recode."}
+    ],
+    "should_not_query": [
+      {"condition": "Acute kidney injury / ATN", "reason": "Already documented by the attending (and nephrology) at full specificity; a query is unnecessary — this is a coding correction."},
+      {"condition": "Hyperkalemia", "reason": "K peak 4.9 is within normal range."}
+    ]
+  },
+  {
+    "case_id": "case_15",
+    "split": "test",
+    "case_type": "gap",
+    "gap_count": 1,
+    "expected": [
+      {"condition": "Pressure ulcer of sacrum, stage 3", "expected_code": "L89.153", "severity": "MCC", "action": "query", "replaces_code": null,
+       "key_evidence": "WOC RN HD1: 'Stage 3 pressure injury, 3.0 x 2.5 x 0.6 cm, full-thickness, POA'; offloading, hydrocolloid, pressure-redistribution mattress, home health wound care. Physician documents only 'sacral wound' — the provider must document the pressure ulcer itself (Guideline I.B.14) before the nurse's stage can be used."}
+    ],
+    "should_not_query": [
+      {"condition": "Malnutrition", "reason": "Albumin 3.4 only; no RD assessment, weight loss, or intake data."}
+    ]
+  },
+  {
+    "case_id": "case_16",
+    "split": "test",
+    "case_type": "gap",
+    "gap_count": 1,
+    "expected": [
+      {"condition": "Heart failure type and acuity (acute systolic)", "expected_code": "I50.21", "severity": "MCC", "action": "query", "replaces_code": "I50.9",
+       "key_evidence": "No prior HF; echo HD2 EF 30% with anterior/apical akinesis; BNP 1,210; crackles, CXR interstitial edema, SpO2 89% RA; furosemide 40 IV q12h, net -2.2 L; GDMT started. Physician writes 'New CHF, EF 30%'."}
+    ],
+    "should_not_query": [
+      {"condition": "Acute respiratory failure", "reason": "SpO2 89% RA corrected with 4 L NC, no increased work of breathing beyond RR 24, off O2 by HD3; borderline — do not query on these indicators alone."},
+      {"condition": "Cardiogenic shock", "reason": "BP 152/94; no hypoperfusion."}
+    ]
+  },
+  {
+    "case_id": "case_17",
+    "split": "test",
+    "case_type": "gap",
+    "gap_count": 1,
+    "expected": [
+      {"condition": "Hypernatremia", "expected_code": "E87.0", "severity": "CC", "action": "query", "replaces_code": null,
+       "key_evidence": "Na 157 -> 155 -> 151 -> 146 -> 143 (HD1-HD4); serum osm 328; free water deficit calculated; D5W 100 mL/h; Na q6h. Physician documents only 'Dehydration — IVF, Na trending down'."}
+    ],
+    "should_not_query": [
+      {"condition": "Metabolic encephalopathy", "reason": "Lethargy at presentation in moderate dementia, improved quickly; no documented change from baseline mental status, attention testing, or workup."},
+      {"condition": "Sepsis", "reason": "T 37.9, HR 102, WBC 12.9 with UTI, BP 108/60; no organ dysfunction."}
+    ]
+  },
+  {
+    "case_id": "case_18",
+    "split": "test",
+    "case_type": "gap",
+    "gap_count": 1,
+    "expected": [
+      {"condition": "Antineoplastic chemotherapy induced pancytopenia", "expected_code": "D61.810", "severity": "MCC", "action": "query", "replaces_code": "D64.9",
+       "key_evidence": "~10 days after AC chemo: WBC 1.6/ANC 0.9 (nadir 0.7), Hgb 7.8, plt 48 (nadir 41); filgrastim x3d, 1u PRBC, daily CBC, neutropenic precautions. Physician documents only 'Cytopenias 2/2 chemo'."}
+    ],
+    "should_not_query": [
+      {"condition": "Sepsis", "reason": "Neutropenic fever with pneumonia, HR 112 improved after PRBC, BP 118/70, lactate 1.1; no organ dysfunction documented."}
+    ]
+  },
+  {
+    "case_id": "case_19",
+    "split": "test",
+    "case_type": "double_gap",
+    "gap_count": 2,
+    "expected": [
+      {"condition": "Metabolic encephalopathy", "expected_code": "G93.41", "severity": "MCC", "action": "query", "replaces_code": "R41.0",
+       "key_evidence": "Independent baseline (finances, bridge); HD1 disoriented, inattentive, CAM+, agitated, sitter HD1-2, haloperidol x1; CT head, TSH, NH3 unremarkable; Na 123; resolved HD3 with Na correction. Physician documents 'AMS/confusion — resolved'."},
+      {"condition": "Hyponatremia", "expected_code": "E87.1", "severity": "CC", "action": "query", "replaces_code": null,
+       "key_evidence": "Na 123 -> 128 -> 130 -> 133 (HD1-HD4); serum osm 254, urine osm 520, urine Na 46; HCTZ stopped; fluid restriction 1 L; Na q4h. Physician documents 'Low Na — thiazide related'."}
+    ],
+    "should_not_query": [
+      {"condition": "Sepsis", "reason": "T 38.1, WBC 14.8 with uncomplicated diverticulitis; HR 92, BP normal; encephalopathy has a metabolic cause (hyponatremia) and resolved with its correction."}
+    ]
+  },
+  {
+    "case_id": "case_20",
+    "split": "test",
+    "case_type": "double_gap",
+    "gap_count": 2,
+    "expected": [
+      {"condition": "Acute blood loss anemia", "expected_code": "D62", "severity": "CC", "action": "query", "replaces_code": "D64.9",
+       "key_evidence": "Hgb 11.9 preop -> 7.6 POD1 after hemiarthroplasty with EBL 450 mL; HR 108, dizzy with PT; 2u PRBC -> Hgb 9.0. Physician documents 'Postop anemia — 2u PRBC'."},
+      {"condition": "Acute kidney injury", "expected_code": "N17.9", "severity": "CC", "action": "query", "replaces_code": null,
+       "key_evidence": "Cr 0.8 (baseline) -> 1.7 HD3 -> 1.4 -> 1.1; UOP 15 mL/h x6h; ketorolac stopped; LR bolus + maintenance. Physician documents 'Cr elevation — ketorolac d/c'd, IVF, improved'."}
+    ],
+    "should_not_query": [
+      {"condition": "Postoperative complication (hemorrhage)", "reason": "Do not suggest the blood loss was a complication; the query asks only about the type of anemia."}
+    ]
+  },
+  {
+    "case_id": "case_21",
+    "split": "test",
+    "case_type": "negative",
+    "gap_count": 0,
+    "expected": [],
+    "should_not_query": [
+      {"condition": "Severe sepsis", "reason": "Documented and coded (A40.3 + R65.20)."},
+      {"condition": "Acute respiratory failure with hypoxia", "reason": "Documented and coded (J96.01)."},
+      {"condition": "Septic shock", "reason": "BP responded to fluids; no vasopressors."}
+    ]
+  },
+  {
+    "case_id": "case_22",
+    "split": "test",
+    "case_type": "negative",
+    "gap_count": 0,
+    "expected": [],
+    "should_not_query": [
+      {"condition": "Acute blood loss anemia", "reason": "Hgb 13.6 -> 11.2 POD1, asymptomatic, no transfusion or workup, no repeat Hgb; surgeon documents 'expected postop blood loss'. Not clinically significant — querying would be leading."},
+      {"condition": "Hyponatremia", "reason": "Single Na 134; not evaluated, treated, or monitored."},
+      {"condition": "Obesity severity", "reason": "Obesity and BMI 41.2 already documented and coded (E66.9 + Z68.41)."}
+    ]
+  },
+  {
+    "case_id": "case_23",
+    "split": "test",
+    "case_type": "trap",
+    "gap_count": 0,
+    "expected": [],
+    "should_not_query": [
+      {"condition": "Pulmonary embolism", "reason": "History only: provoked PE ~4 yrs ago, treatment completed, off anticoagulation, CTA negative this admission. Correctly coded Z86.711."},
+      {"condition": "Cerebral infarction / hemiparesis", "reason": "History of CVA without residual deficits, neuro exam at baseline. Correctly coded Z86.73."}
+    ]
+  },
+  {
+    "case_id": "case_24",
+    "split": "test",
+    "case_type": "trap",
+    "gap_count": 0,
+    "expected": [],
+    "should_not_query": [
+      {"condition": "NSTEMI / acute coronary syndrome", "reason": "'Rule out' diagnosis that was ruled out (hs-troponin <6 x3, normal stress echo). Section III.C (uncertain diagnosis) applies only to conditions still uncertain at discharge, not to ruled-out ones."}
+    ]
+  }
+]

@@ -1,0 +1,46 @@
+{
+  "id": "case-01",
+  "title": "Pneumonia with a creatinine rise that is never named",
+  "discharge_summary": [
+    "SYNTHETIC CASE - NOT A REAL PATIENT",
+    "Discharge Summary",
+    "Patient: Synthetic Patient 01, 72-year-old male. MRN: SYN-0001",
+    "Admission date: 03/02   Discharge date: 03/06",
+    "Attending: Hospitalist A (fictional)",
+    "",
+    "Reason for admission: Fever, productive cough, and shortness of breath for 3 days.",
+    "",
+    "Hospital course:",
+    "The patient presented with fever of 38.9 C, cough, and right lower lobe infiltrate on chest x-ray. He was started on IV ceftriaxone and azithromycin for community-acquired pneumonia. Oral intake had been poor for several days before admission.",
+    "Creatinine was 2.3 mg/dL on admission; his baseline creatinine is 1.0 mg/dL per clinic records from last month. Urine output was 0.4 mL/kg/hr for the first 12 hours. Metformin and lisinopril were held. He received IV normal saline at 125 mL/hr for 48 hours. Creatinine improved to 1.6 on hospital day 2 and 1.1 at discharge.",
+    "Oxygen saturation remained 93-96% on room air throughout the stay.",
+    "Blood glucose was well controlled on sliding-scale insulin while metformin was held.",
+    "",
+    "Discharge diagnoses:",
+    "1. Community-acquired pneumonia, right lower lobe",
+    "2. Type 2 diabetes mellitus",
+    "3. Hypertension",
+    "",
+    "Discharge plan: Oral amoxicillin-clavulanate to complete 7 days. Resume metformin and lisinopril in 48 hours if labs are stable. Repeat basic metabolic panel in 1 week."
+  ],
+  "codes": {
+    "principal": "J18.9",
+    "secondary": [
+      "E11.9",
+      "I10"
+    ]
+  },
+  "expected": {
+    "candidates": [
+      {
+        "codes": [
+          "N17.9",
+          "N17.0"
+        ],
+        "status": "needs_query"
+      }
+    ],
+    "allowed_extra": [],
+    "notes": "Creatinine 2.3 from baseline 1.0 with low urine output, treated with IV fluids and held nephrotoxic meds: indicators of acute kidney injury, which the physician never names. Query for AKI (N17.9, CC)."
+  }
+}

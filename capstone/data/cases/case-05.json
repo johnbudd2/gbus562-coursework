@@ -1,0 +1,33 @@
+{
+  "id": "case-05",
+  "title": "Uncomplicated appendicitis: nothing to query",
+  "discharge_summary": [
+    "SYNTHETIC CASE - NOT A REAL PATIENT",
+    "Discharge Summary",
+    "Patient: Synthetic Patient 05, 34-year-old female. MRN: SYN-0005",
+    "Admission date: 06/02   Discharge date: 06/03",
+    "Attending: Surgeon E (fictional)",
+    "",
+    "Reason for admission: Right lower quadrant abdominal pain for 18 hours.",
+    "",
+    "Hospital course:",
+    "CT of the abdomen showed acute appendicitis without perforation or abscess. She underwent laparoscopic appendectomy on the day of admission without complications. Pathology confirmed acute appendicitis. Vital signs were normal throughout the stay. White blood cell count was 12.1 on admission and 8.9 on the morning of discharge. Basic metabolic panel was normal. She tolerated a regular diet on postoperative day 1 and pain was controlled with oral medications.",
+    "",
+    "Discharge diagnoses:",
+    "1. Acute appendicitis, status post laparoscopic appendectomy",
+    "2. Hyperlipidemia",
+    "",
+    "Discharge plan: Oral analgesics as needed. No lifting over 10 pounds for 2 weeks. Surgical clinic follow-up in 2 weeks."
+  ],
+  "codes": {
+    "principal": "K35.80",
+    "secondary": [
+      "E78.5"
+    ]
+  },
+  "expected": {
+    "candidates": [],
+    "allowed_extra": [],
+    "notes": "Routine case with complete documentation and coding. No candidates."
+  }
+}

@@ -1,0 +1,49 @@
+{
+  "id": "case-03",
+  "title": "Severe malnutrition documented only by the dietitian",
+  "discharge_summary": [
+    "SYNTHETIC CASE - NOT A REAL PATIENT",
+    "Discharge Summary",
+    "Patient: Synthetic Patient 03, 84-year-old female. MRN: SYN-0003",
+    "Admission date: 05/20   Discharge date: 05/24",
+    "Attending: Hospitalist C (fictional)",
+    "",
+    "Reason for admission: Dysuria, fever, and increased confusion reported by the nursing facility.",
+    "",
+    "Hospital course:",
+    "Urinalysis showed pyuria and urine culture grew E. coli sensitive to ceftriaxone. She was treated with IV ceftriaxone and changed to oral cephalexin on day 3. Mental status returned to her baseline mild dementia by day 2.",
+    "Nutrition was consulted on day 1 because of poor intake at the facility.",
+    "Registered dietitian assessment (day 2): BMI 16.4. Unintentional weight loss of 14% over the past 3 months. Oral intake less than 50% of estimated energy needs for more than 1 month. Moderate muscle wasting at the temples and clavicles. Meets ASPEN criteria for severe protein-calorie malnutrition.",
+    "She was started on oral nutrition supplements three times daily and a multivitamin, and calorie counts were performed. Intake improved to about 60% of needs by discharge.",
+    "",
+    "Discharge diagnoses:",
+    "1. Urinary tract infection due to E. coli",
+    "2. Dementia",
+    "3. Hypertension",
+    "",
+    "Discharge plan: Cephalexin to complete 7 days. Continue oral nutrition supplements three times daily. Weekly weights at the facility."
+  ],
+  "codes": {
+    "principal": "N39.0",
+    "secondary": [
+      "B96.20",
+      "F03.90",
+      "I10"
+    ]
+  },
+  "expected": {
+    "candidates": [
+      {
+        "codes": [
+          "E43",
+          "E44.0",
+          "E44.1",
+          "E46"
+        ],
+        "status": "needs_query"
+      }
+    ],
+    "allowed_extra": [],
+    "notes": "Only the dietitian documents severe protein-calorie malnutrition. Guideline I.B.14: the diagnosis must come from the patient's provider. The physician ordered supplements but never documented the diagnosis. Query (E43, MCC)."
+  }
+}

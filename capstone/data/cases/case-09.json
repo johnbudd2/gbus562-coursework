@@ -1,0 +1,41 @@
+{
+  "id": "case-09",
+  "title": "'Likely' acute blood loss anemia after knee replacement",
+  "discharge_summary": [
+    "SYNTHETIC CASE - NOT A REAL PATIENT",
+    "Discharge Summary",
+    "Patient: Synthetic Patient 09, 70-year-old male. MRN: SYN-0009",
+    "Admission date: 09/10   Discharge date: 09/13",
+    "Attending: Orthopedic Surgeon I (fictional)",
+    "",
+    "Reason for admission: Elective right total knee arthroplasty for primary osteoarthritis of the right knee.",
+    "",
+    "Hospital course:",
+    "He underwent right total knee arthroplasty on the day of admission. Estimated blood loss was 600 mL. Hemoglobin was 13.4 g/dL before surgery and 8.2 g/dL on postoperative day 1. He was lightheaded with ambulation and was transfused 1 unit of packed red blood cells, with hemoglobin 9.3 g/dL the next morning and resolution of symptoms. He worked with physical therapy twice daily and was walking 150 feet with a walker at discharge.",
+    "",
+    "Discharge diagnoses:",
+    "1. Primary osteoarthritis, right knee, status post right total knee arthroplasty",
+    "2. Likely acute blood loss anemia, transfused 1 unit PRBC",
+    "3. Hypertension",
+    "",
+    "Discharge plan: Home with home physical therapy. Aspirin 81 mg twice daily for 4 weeks for DVT prevention. Orthopedic follow-up in 2 weeks."
+  ],
+  "codes": {
+    "principal": "M17.11",
+    "secondary": [
+      "I10"
+    ]
+  },
+  "expected": {
+    "candidates": [
+      {
+        "codes": [
+          "D62"
+        ],
+        "status": "documented_not_coded"
+      }
+    ],
+    "allowed_extra": [],
+    "notes": "'Likely acute blood loss anemia' at discharge is coded as if established for an inpatient (Section III.C). D62 (CC) is missing from the code list: back to coding, no query."
+  }
+}
