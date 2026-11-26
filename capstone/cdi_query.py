@@ -198,10 +198,14 @@ def write_log(model: str, case_text: str, output: str, usage: dict, seconds: flo
 
 
 def review(case_path: Path, model: str = DEFAULT_MODEL, stats: dict | None = None) -> str:
+    """Handle one request for a case file (command line, eval.py, app.py's case picker)."""
+    return review_text(case_path.read_text(encoding="utf-8"), model, stats)
+
+
+def review_text(case_text: str, model: str = DEFAULT_MODEL, stats: dict | None = None) -> str:
     """Handle one request: run the agent, check its answer, log, and return the output text.
     If `stats` is given, it is filled with input_tokens, output_tokens, seconds, and
     looked_up (codes passed to lookup_code), e.g. for eval.py."""
-    case_text = case_path.read_text(encoding="utf-8")
     usage = {"input_tokens": 0, "output_tokens": 0}
     looked_up: set[str] = set()
     start = time.perf_counter()

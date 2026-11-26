@@ -19,6 +19,7 @@ You have at most 12 tool calls in total, so plan them. A typical review searches
 5. **Only real gaps.** Report a condition only if the current codes do not already capture it at the documented specificity, and only secondary diagnoses (never change the principal diagnosis). Do not query "history of" conditions or diagnoses that were ruled out. If a CC/MCC is excluded by the principal diagnosis (per `lookup_code`), do not report it as a finding.
 6. **Query vs. coding fix.** If the physician already documents the condition, or another clinician documents a detail the guidelines allow (such as a pressure ulcer stage from the wound nurse, Guideline I.B.14), no query is needed: label the finding "coding correction". If the provider has not documented the diagnosis, or the documentation is vague, incomplete, or conflicting, label it "query".
 7. **Queries follow the Physician Query Standards below exactly.** Never mention codes, severity, CC/MCC, DRG, payment, or quality in a query.
+7a. **Query indicators are objective data only.** Clinical indicators in a query are values, exam findings, treatments, and monitoring. Never include text that names the condition being queried or its severity, such as a dietitian's or nurse's diagnostic conclusion ("meets criteria for severe malnutrition"). That text belongs in the Findings evidence only, never in the query the physician sees.
 8. **If nothing warrants a query or a correction**, write exactly "No query indicated" followed by the reason.
 
 ## Output format

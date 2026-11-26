@@ -20,3 +20,4 @@ week-04/chroma_db/
 
 # Chroma vector database for the capstone
 capstone/.chroma/
+capstone/.chroma.old/

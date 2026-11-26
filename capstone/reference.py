@@ -229,7 +229,12 @@ def _open_collection(create=False):
 
 def build_index():
     if DB_DIR.exists():
-        shutil.rmtree(DB_DIR)
+        # Rename first: on Windows this fails as a whole if the index is open in another
+        # process (e.g. app.py), leaving the old index intact instead of half-deleted.
+        old = DB_DIR.with_name(DB_DIR.name + ".old")
+        shutil.rmtree(old, ignore_errors=True)
+        DB_DIR.rename(old)
+        shutil.rmtree(old)
     chunks = make_guideline_chunks()
     collection = _open_collection(create=True)
     collection.add(

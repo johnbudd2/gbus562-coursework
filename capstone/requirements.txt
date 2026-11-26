@@ -3,3 +3,4 @@
 anthropic      # Claude API (cdi_query.py, cdi.py)
 chromadb       # guideline search index in capstone/.chroma (reference.py, search_guidelines tool)
 pypdf          # reads the ICD-10-CM guidelines PDF to build the index (reference.py)
+streamlit      # minimal web front end (app.py)
