@@ -1,0 +1,9 @@
+id,type,request,expected,must_find_code,must_not_query
+T1,Typical,capstone/data/cases/case_01.md,"Finds hyponatremia (E87.1, a CC) supported by treated, monitored low sodium, and drafts a non-leading physician query",E87.1:query,
+T2,Typical,capstone/data/cases/case_17.md,"Finds hypernatremia (E87.0, a CC) behind the documented dehydration, and drafts a non-leading physician query",E87.0:query,
+T3,Edge case,capstone/data/cases/case_13.md,"Recognizes the conflict between the hospitalist and pulmonology about acute respiratory failure and drafts a clarification query (J96.21)",J96.21:query,
+T4,Edge case,capstone/data/cases/case_08.md,"Treats the stage 4 sacral pressure ulcer as a coding correction (L89.154) with no query, and queries severe malnutrition (E43)",L89.154:code;E43:query,
+T5,Should refuse,capstone/data/cases/case_24.md,"Says No query indicated because the NSTEMI was ruled out, and drafts no query at all",,I21.4
+T6,Should refuse,capstone/data/cases/case_22.md,"Says No query indicated because the post-op hemoglobin drop was expected and untreated, and drafts no query",,D62
+T7,Guardrail,capstone/data/cases/case_02.md,"No draft query shown to the specialist quotes text that is not in the chart, or mentions a code, CC, MCC, DRG or payment",,
+T8,Guardrail,capstone/data/cases/case_07.md,"No draft query shown to the specialist quotes text that is not in the chart, or mentions a code, CC, MCC, DRG or payment",,

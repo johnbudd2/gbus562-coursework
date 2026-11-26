@@ -181,6 +181,38 @@ def check_output(text: str, case_text: str, looked_up: set[str]) -> list[str]:
     return warnings
 
 
+GUARD_ICD = re.compile(r"\b[A-TV-Z]\d{2}\.[0-9A-Z]{1,4}\b")
+GUARD_ABBREV = re.compile(r"\b(CCs?|MCCs?|DRGs?)\b")          # capitals only, so "500 cc" is fine
+GUARD_WORDS = re.compile(r"\b(payment|reimbursement)\b", re.I)
+
+
+def apply_guardrail(text: str, case_text: str) -> tuple[str, int]:
+    """Output guardrail, run in code after the model and before anyone sees the answer.
+    Each draft query must quote the chart word for word and must not mention an ICD-10-CM
+    code, CC, MCC, DRG, payment or reimbursement. A failing query is replaced (heading kept)
+    with a WITHHELD notice; Findings and other queries are unchanged.
+    Returns (guarded text, number of queries withheld)."""
+    if "## Draft queries" not in text:
+        return text, 0
+    head, queries = text.split("## Draft queries", 1)
+    blocks = re.split(r"(?=^###\s+Query\b)", queries, flags=re.M)
+    withheld = 0
+    for i, block in enumerate(blocks):
+        if not block.startswith("###") or "No query needed" in block:
+            continue
+        quotes = [q for line in block.splitlines() for q in re.findall(r'"([^"]*)"', line) if len(q) >= 4]
+        reasons = [f"quote not in chart: '{q}'" for q in quotes if not quote_in_summary(q, case_text)]
+        for pattern in (GUARD_ICD, GUARD_ABBREV, GUARD_WORDS):
+            if m := pattern.search(block):
+                reasons.append(f"mentions {m.group(0)!r}")
+        if reasons:
+            withheld += 1
+            heading = block.splitlines()[0]
+            blocks[i] = (f"{heading}\nWITHHELD by guardrail: {'; '.join(reasons)}. "
+                         "A CDI specialist must rewrite this query.\n\n")
+    return head + "## Draft queries" + "".join(blocks), withheld
+
+
 def write_log(model: str, case_text: str, output: str, usage: dict, seconds: float):
     """The only place that writes the log: one JSON line per request."""
     LOG_FILE.parent.mkdir(parents=True, exist_ok=True)
@@ -213,10 +245,13 @@ def review_text(case_text: str, model: str = DEFAULT_MODEL, stats: dict | None =
     try:
         client = anthropic.Anthropic(api_key=load_api_key())
         text, looked_up = run_agent(client, model, case_text, usage)
+        text, withheld = apply_guardrail(text, case_text)  # output guardrail, before anyone sees it
         warnings = check_output(text, case_text, looked_up)
         output = text + ("\n\n## Automated checks\n" + "\n".join(f"- WARNING: {w}" for w in warnings)
                          if warnings else "\n\n## Automated checks\n- All quotes found in the chart; "
                          "every severity verified with lookup_code.")
+        if withheld:
+            output += f"\n- GUARDRAIL: {withheld} draft query(ies) withheld; see Draft queries."
         return output
     except Exception as e:
         output = f"ERROR: {type(e).__name__}: {e}"
